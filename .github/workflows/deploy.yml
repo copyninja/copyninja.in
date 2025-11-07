@@ -61,8 +61,8 @@ jobs:
         uses: JamesIves/github-pages-deploy-action@v4
         with:
           branch: gh-pages
-          folder: site/output
-          clean: true
+          folder: ./site/output
+          clean: false
           clean-exclude: |
             CNAME
 
