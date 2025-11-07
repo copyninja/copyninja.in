@@ -3,18 +3,17 @@
 from __future__ import unicode_literals
 import os
 
-AUTHOR = u'Vasudeva Kamath'
-SITENAME = u'Random Ramblings'
-SITESUBTITLE=u'Random thoughts shooting out of volatile mind'
-SITEURL = 'http://localhost:8000'
+AUTHOR = "Vasudeva Kamath"
+SITENAME = "Random Ramblings"
+SITESUBTITLE = "Random thoughts shooting out of volatile mind"
+SITEURL = "http://localhost:8000"
 
-TIMEZONE = 'Asia/Calcutta'
+TIMEZONE = "Asia/Calcutta"
 
-DEFAULT_LANG = u'en'
+DEFAULT_LANG = "en"
 
 # Theme
-THEME = os.path.join(os.environ.get('HOME'),
-                     'Public/pelican-simple/')
+THEME = os.path.join(os.environ.get("HOME"), "Public/pelican-simple/")
 
 
 # Feed generation is usually not desired when developing
@@ -37,38 +36,44 @@ SITE_LICENSE = CC_LICENSE
 GITHUB_USER = "copyninja"
 
 # Blogroll
-LINKS = (('Old Blog Archive', 'http://blog-archive.copyninja.info/'),
-         ('Ohloh Profile', 'https://www.ohloh.net/accounts/copyninja'),
-         ('Developer Overview (Debian)',
-          'http://qa.debian.org/developer.php?login=kamathvasudev@gmail.com'))
+LINKS = (
+    ("Old Blog Archive", "http://blog-archive.copyninja.info/"),
+    ("Ohloh Profile", "https://www.ohloh.net/accounts/copyninja"),
+    (
+        "Developer Overview (Debian)",
+        "http://qa.debian.org/developer.php?login=kamathvasudev@gmail.com",
+    ),
+)
 
 # Social widget
-SOCIAL = (('twitter', 'https://twitter.com/copyninja_'),
-          ('linkedin', 'http://in.linkedin.com/in/kamathvasudev/'),
-          ('github', 'https://github.com/copyninja'),
-          ('bitbucket', 'https://bitbucket.com/copyninja'))
+SOCIAL = (
+    ("twitter", "https://twitter.com/copyninja_"),
+    ("linkedin", "http://in.linkedin.com/in/kamathvasudev/"),
+    ("github", "https://github.com/copyninja"),
+    ("bitbucket", "https://bitbucket.com/copyninja"),
+)
 
 # Uncomment following line if you want document-relative URLs when developing
-#RELATIVE_URLS = True
+# RELATIVE_URLS = True
 
-STATIC_PATHS = ["images", ]
-
-PLUGIN_PATHS = ['../pelican-plugins']
-PLUGINS = [
-    'pelican_youtube',
-    'minification',
-    'render_math'
+STATIC_PATHS = [
+    "images",
 ]
 
+PLUGIN_PATHS = ["../pelican-plugins"]
+PLUGINS = ["pelican_youtube", "minification", "render_math"]
+
 # URL generation
-ARTICLE_URL = 'blog/{slug}.html'
-ARTICLE_SAVE_AS = 'blog/{slug}.html'
-PAGE_URL = '{slug}'
-PAGE_SAVE_AS = '{slug}.html'
-TAG_URL = 'tags/{slug}.html'
-TAG_SAVE_AS = 'tags/{slug}.html'
+ARTICLE_URL = "blog/{slug}.html"
+ARTICLE_SAVE_AS = "blog/{slug}.html"
+PAGE_URL = "{slug}"
+PAGE_SAVE_AS = "{slug}.html"
+TAG_URL = "tags/{slug}.html"
+TAG_SAVE_AS = "tags/{slug}.html"
 
 # Save index
-#INDEX_SAVE_AS = 'archive.html'
+# INDEX_SAVE_AS = 'archive.html'
 
-PYGMENTS_RST_OPTIONS = {'linenos': 'none',}
+PYGMENTS_RST_OPTIONS = {
+    "linenos": "none",
+}
