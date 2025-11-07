@@ -36,8 +36,8 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v4
         with:
-          python-version: "3.11"
-          cache: "pip"
+          python-version: '3.11'
+          cache: 'pip'
 
       - name: Install dependencies
         run: |
@@ -48,11 +48,13 @@ jobs:
       - name: Update Theme Path
         run: |
           cd site
-          sed -i 's|os.path.join(os.environ.get(.HOME.).*)|"../pelican-simple/"|' pelicanconf.py
+          sed -i "s|THEME = os.path.join(os.environ.get('HOME'),\s*'Public/pelican-simple/')|THEME = '../pelican-simple'|" pelicanconf.py
+          cat pelicanconf.py  # Debug: verify the change
 
       - name: Build site
         run: |
           cd site
+          export PYTHONPATH="../pelican-plugins:$PYTHONPATH"
           pelican content -s publishconf.py
           echo "copyninja.in" > output/CNAME
 
