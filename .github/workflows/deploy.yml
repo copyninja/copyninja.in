@@ -48,7 +48,7 @@ jobs:
       - name: Update Theme Path
         run: |
           sed -i 's|THEME = os\.path\.join.*|THEME = "./pelican-simple"|' pelicanconf.py
-          sed -i 's|PLUGIN_PATHS = .*|PLUGIN_PATHS = ["./pelican-plugins"]|' pelicaconf.py
+          sed -i 's|PLUGIN_PATHS = .*|PLUGIN_PATHS = ["./pelican-plugins"]|' pelicanconf.py
 
       - name: Build site
         run: |
