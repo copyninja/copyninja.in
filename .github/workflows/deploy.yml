@@ -44,6 +44,7 @@ jobs:
           python -m pip install --upgrade pip
           pip install pelican markdown typogrify beautifulsoup4
           pip install pelican-youtube pelican-minification pelican-render-math
+          apt-get install make -y
 
       - name: Update Theme Path
         run: |
@@ -53,11 +54,10 @@ jobs:
       - name: Build site
         run: |
           cd site
-          pelican content -s publishconf.py
+          make publish
           echo "copyninja.in" > output/CNAME
 
       - name: Deploy 🚀
-        if: github.ref == 'refs/heads/master'
         uses: JamesIves/github-pages-deploy-action@v4
         with:
           branch: gh-pages
@@ -66,10 +66,3 @@ jobs:
           clean-exclude: |
             CNAME
 
-      - name: Deploy Preview 🔍
-        if: github.event_name == 'pull_request'
-        uses: rossjrw/pr-preview-action@v1
-        with:
-          source-dir: site/output
-          preview-branch: gh-pages
-          umbrella-dir: pr-preview
