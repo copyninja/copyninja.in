@@ -1,0 +1,144 @@
+<?xml version="1.0" encoding="utf-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom"><title>Random Ramblings - bsd</title><link href="https://copyninja.in/" rel="alternate"/><link href="https://copyninja.in/feeds/bsd.atom.xml" rel="self"/><id>https://copyninja.in/</id><updated>2014-03-01T22:10:00+05:30</updated><subtitle>Random thoughts shooting out of volatile mind</subtitle><entry><title>Installing and Configuring NetBSD on Qemu in Debian</title><link href="https://copyninja.in/blog/netbsd-on-qemu.html" rel="alternate"/><published>2014-03-01T22:10:00+05:30</published><updated>2014-03-01T22:10:00+05:30</updated><author><name>copyninja</name></author><id>tag:copyninja.in,2014-03-01:/blog/netbsd-on-qemu.html</id><summary type="html">&lt;p class="first last"&gt;An introduction to installing NetBSD on Qemu and enabling
+networking on a Debian host.&lt;/p&gt;
+</summary><content type="html">&lt;p&gt;First step will be getting a NetBSD ISO image for installation
+purpose. It can be downloaded from &lt;a class="reference external" href="http://www.netbsd.org/mirrors/torrents/#6.1.3-ports"&gt;here&lt;/a&gt;.&lt;/p&gt;
+&lt;p&gt;Next step will be creating a disk image for installing NetBSD. This is
+done using &lt;tt class="docutils literal"&gt;&lt;span class="pre"&gt;qemu-img&lt;/span&gt;&lt;/tt&gt; tool like below&lt;/p&gt;
+&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;&lt;span class="gp"&gt;$ &lt;/span&gt;qemu-img&lt;span class="w"&gt; &lt;/span&gt;create&lt;span class="w"&gt; &lt;/span&gt;-f&lt;span class="w"&gt; &lt;/span&gt;raw&lt;span class="w"&gt; &lt;/span&gt;netbsd-disk.img&lt;span class="w"&gt; &lt;/span&gt;10G
+&lt;/pre&gt;&lt;/div&gt;
+&lt;p&gt;Image format used is &lt;em&gt;raw&lt;/em&gt; and size is specified as last
+arugment. Tune the size as per your need.&lt;/p&gt;
+&lt;p&gt;To start the installation run the following command&lt;/p&gt;
+&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;&lt;span class="gp"&gt;$ &lt;/span&gt;qemu-system-x86_64&lt;span class="w"&gt; &lt;/span&gt;-m&lt;span class="w"&gt; &lt;/span&gt;256M&lt;span class="w"&gt; &lt;/span&gt;-hda&lt;span class="w"&gt; &lt;/span&gt;netbsd-disk.img&lt;span class="w"&gt; &lt;/span&gt;-cdrom&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="se"&gt;\&lt;/span&gt;
+&lt;span class="w"&gt;             &lt;/span&gt;NetBSD-6.1.3-amd64.iso&lt;span class="w"&gt; &lt;/span&gt;-display&lt;span class="w"&gt; &lt;/span&gt;curses&lt;span class="w"&gt; &lt;/span&gt;-boot&lt;span class="w"&gt; &lt;/span&gt;d&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="se"&gt;\&lt;/span&gt;
+&lt;span class="w"&gt;             &lt;/span&gt;-net&lt;span class="w"&gt; &lt;/span&gt;nic&lt;span class="w"&gt; &lt;/span&gt;-net&lt;span class="w"&gt; &lt;/span&gt;user
+&lt;/pre&gt;&lt;/div&gt;
+&lt;p&gt;So this is using user mode networking so you won't be able to have
+internet access during installation. I couldn't figure out on how to
+get network working during installation so I configured network after
+installation.&lt;/p&gt;
+&lt;p&gt;Once you run above command you will be given with 4 options as
+follows.&lt;/p&gt;
+&lt;ol class="arabic simple"&gt;
+&lt;li&gt;install netbsd&lt;/li&gt;
+&lt;li&gt;install netbsd with ACPI disabled&lt;/li&gt;
+&lt;li&gt;install netbsd with ACPI and SMP disabled&lt;/li&gt;
+&lt;li&gt;drop to boot shell&lt;/li&gt;
+&lt;/ol&gt;
+&lt;p&gt;Even though I first installed using the option 1 I couldn't get it
+boot after installation so had to reinstall with option 2 and it works
+fine. I'm not gonna explain each step of installation here because the
+installer is really simple and straight forward! I guess the NetBSD
+installer is the first simplest installer I have encountered from the
+day I started with Linux. Its simple but powerful and gets job done
+very easily, and I didn't read manual for installation before using
+it.&lt;/p&gt;
+&lt;div class="section" id="enabling-networking"&gt;
+&lt;h2&gt;Enabling Networking&lt;/h2&gt;
+&lt;p&gt;This section involves mixture of configuration in Debian host and
+inside NetBSD to get the network working. The wiki page of Debian on
+&lt;a class="reference external" href="https://wiki.debian.org/QEMU#Networking"&gt;Qemu&lt;/a&gt;. helped me here.&lt;/p&gt;
+&lt;p&gt;To share the network with Qemu there are 2 possiblities&lt;/p&gt;
+&lt;ol class="arabic simple"&gt;
+&lt;li&gt;Bridged networking between host and guest using &lt;em&gt;bridge-utils&lt;/em&gt;&lt;/li&gt;
+&lt;li&gt;Using VDE &lt;em&gt;(Virtual Distributed Ethernet)&lt;/em&gt;&lt;/li&gt;
+&lt;/ol&gt;
+&lt;p&gt;The option 1 which is explained in wiki linked above didn't work for
+me as I use CDC Ether based datacard for connecting to Internet which
+gets detected as &lt;em&gt;eth1&lt;/em&gt; on my machine. When bridging happens between
+&lt;em&gt;tap0&lt;/em&gt; and &lt;em&gt;eth1&lt;/em&gt; I end up loosing Internet on my host machine. So I
+selected to use VDE instead.&lt;/p&gt;
+&lt;p&gt;First install packages &lt;em&gt;vde2&lt;/em&gt; and &lt;em&gt;uml-utilities&lt;/em&gt; once done edit the
+&lt;em&gt;/etc/network/interfaces&lt;/em&gt; file and add following lines:&lt;/p&gt;
+&lt;pre class="literal-block"&gt;
+auto vdetap
+iface vdetap inet static
+   address 192.168.2.1
+   netmask 255.255.255.0
+   vde2-switch -t vdetap
+&lt;/pre&gt;
+&lt;p&gt;We can use &lt;em&gt;dnsmasq&lt;/em&gt; as a DHCP server for the &lt;em&gt;vdetap&lt;/em&gt; interface, but
+I'm not gonna explain the configuration of &lt;em&gt;dnsmasq&lt;/em&gt; here. Run the
+below command to get vdetap up&lt;/p&gt;
+&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;&lt;span class="go"&gt;modprobe tun&lt;/span&gt;
+&lt;span class="go"&gt;ifup vdetap&lt;/span&gt;
+&lt;span class="go"&gt;/etc/init.d/dnsmasq restart&lt;/span&gt;
+&lt;span class="go"&gt;newgrp vde2-net # run as user starting Qemu VM&amp;#39;s&lt;/span&gt;
+&lt;/pre&gt;&lt;/div&gt;
+&lt;p&gt;I couldn't get successful output for &lt;em&gt;newgrp&lt;/em&gt; command, I was getting
+some &lt;tt class="docutils literal"&gt;crypt: Invalid argument&lt;/tt&gt; output. But I could still get
+network working on NetBSD so I considered to ignore that for now.&lt;/p&gt;
+&lt;p&gt;Now start the NetBSD qemu instance running using following command&lt;/p&gt;
+&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;&lt;span class="gp"&gt;$ &lt;/span&gt;qemu-system-x86_64&lt;span class="w"&gt; &lt;/span&gt;-m&lt;span class="w"&gt; &lt;/span&gt;256M&lt;span class="w"&gt; &lt;/span&gt;-hda&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="se"&gt;\&lt;/span&gt;
+&lt;span class="w"&gt;             &lt;/span&gt;/mnt/kailash/BSDWorld/netbsd-disk.img&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="se"&gt;\&lt;/span&gt;
+&lt;span class="w"&gt;             &lt;/span&gt;-net&lt;span class="w"&gt; &lt;/span&gt;nic&lt;span class="w"&gt; &lt;/span&gt;-net&lt;span class="w"&gt; &lt;/span&gt;vde,sock&lt;span class="o"&gt;=&lt;/span&gt;/var/run/vde2/vdetap.ctl&lt;span class="w"&gt; &lt;/span&gt;-display&lt;span class="w"&gt; &lt;/span&gt;curses
+&lt;/pre&gt;&lt;/div&gt;
+&lt;p&gt;Once the system is up login using &lt;em&gt;root&lt;/em&gt; user, NetBSD will warn you
+for this and suggest to create another user but for now ignore
+it. To find the network interface in NetBSD just run the usual
+&lt;em&gt;ifconfig&lt;/em&gt; command. In my case interface is named &lt;em&gt;wm0&lt;/em&gt;.&lt;/p&gt;
+&lt;p&gt;First step will be configuring the IP address for your interface and
+setting up the gateway route. Run the below command for this purpose&lt;/p&gt;
+&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;&lt;span class="gp"&gt;# &lt;/span&gt;ifconfig&lt;span class="w"&gt; &lt;/span&gt;wm0&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="m"&gt;192&lt;/span&gt;.168.2.2&lt;span class="w"&gt; &lt;/span&gt;netmask&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="m"&gt;255&lt;/span&gt;.255.255.0
+&lt;span class="gp"&gt;# &lt;/span&gt;route&lt;span class="w"&gt; &lt;/span&gt;add&lt;span class="w"&gt; &lt;/span&gt;default&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="m"&gt;192&lt;/span&gt;.168.2.1
+&lt;/pre&gt;&lt;/div&gt;
+&lt;p&gt;Note that I added gateway as IP address of vdetap on my host
+machine. Now try pinging the host and even you can try ssh to host
+system.&lt;/p&gt;
+&lt;p&gt;But note that this is not persistent over the reboots and for some
+reason I didn't yet figure out how to make NetBSD get address over
+DHCP from my host machine. I will update once I figure it out. Now to
+make the connection address persistent over reboots you need to create
+a file by name &lt;em&gt;/etc/ifconfg.&amp;lt;interface&amp;gt;&lt;/em&gt;. Replace &lt;em&gt;interface&lt;/em&gt; with a
+proper interface on your running NetBSD. In my case this file is
+&lt;em&gt;/etc/ifconfig.wm0&lt;/em&gt; and has following content.:&lt;/p&gt;
+&lt;pre class="literal-block"&gt;
+192.168.2.2 netmask 0xffffff00 media autoselect
+&lt;/pre&gt;
+&lt;p&gt;Set the DNS server as host by adding file &lt;em&gt;/etc/resolv.conf&lt;/em&gt; with
+following content.:&lt;/p&gt;
+&lt;pre class="literal-block"&gt;
+nameserver 192.168.2.1
+&lt;/pre&gt;
+&lt;p&gt;After this you need to do NAT/masquerading using iptables. Just copy
+following script to a file and execute it as root&lt;/p&gt;
+&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;&lt;span class="ch"&gt;#!/bin/sh&lt;/span&gt;
+
+&lt;span class="c1"&gt;# Restart the dnsmasq&lt;/span&gt;
+/etc/init.d/dnsmasq&lt;span class="w"&gt; &lt;/span&gt;restart
+
+&lt;span class="c1"&gt;# Set nat rules in iptables&lt;/span&gt;
+iptables&lt;span class="w"&gt; &lt;/span&gt;--flush
+iptables&lt;span class="w"&gt; &lt;/span&gt;--table&lt;span class="w"&gt; &lt;/span&gt;nat&lt;span class="w"&gt; &lt;/span&gt;--flush
+iptables&lt;span class="w"&gt; &lt;/span&gt;--delete-chain
+iptables&lt;span class="w"&gt; &lt;/span&gt;--table&lt;span class="w"&gt; &lt;/span&gt;nat&lt;span class="w"&gt; &lt;/span&gt;--delete-chain
+
+&lt;span class="c1"&gt;# Replace accordingly usb0 with ppp0 for 3G&lt;/span&gt;
+iptables&lt;span class="w"&gt; &lt;/span&gt;--table&lt;span class="w"&gt; &lt;/span&gt;nat&lt;span class="w"&gt; &lt;/span&gt;--append&lt;span class="w"&gt; &lt;/span&gt;POSTROUTING&lt;span class="w"&gt; &lt;/span&gt;--out-interface&lt;span class="w"&gt; &lt;/span&gt;eth1&lt;span class="w"&gt; &lt;/span&gt;-j&lt;span class="w"&gt; &lt;/span&gt;MASQUERADE
+iptables&lt;span class="w"&gt; &lt;/span&gt;--append&lt;span class="w"&gt; &lt;/span&gt;FORWARD&lt;span class="w"&gt; &lt;/span&gt;--in-interface&lt;span class="w"&gt; &lt;/span&gt;vdetap&lt;span class="w"&gt; &lt;/span&gt;-j&lt;span class="w"&gt; &lt;/span&gt;ACCEPT
+
+&lt;span class="c1"&gt;# Enable IP forwarding in Kernel&lt;/span&gt;
+sysctl&lt;span class="w"&gt; &lt;/span&gt;-w&lt;span class="w"&gt; &lt;/span&gt;net.ipv4.ip_forward&lt;span class="o"&gt;=&lt;/span&gt;&lt;span class="m"&gt;1&lt;/span&gt;
+&lt;/pre&gt;&lt;/div&gt;
+&lt;p&gt;With the above setup you will be able to get DNS resolution even after
+you reboot the Qemu instance but Internet connection will not work
+untill you run the &lt;tt class="docutils literal"&gt;route&lt;/tt&gt; command I mentioned above. I still didn't
+figure out how to persist route but I will update it here once I
+figure it out.&lt;/p&gt;
+&lt;blockquote&gt;
+Note that you won't be able to SSH as root to NetBSD (may be its
+configured to not allow by default), so you would need to create a
+normal user before trying to SSH from host to guest. Also make sure
+you add the user to &lt;em&gt;wheel&lt;/em&gt; group to allow him execute su command.&lt;/blockquote&gt;
+&lt;p&gt;So now I've NetBSD running on my laptop with mere 256M ram and its
+amazingly fast even at such low RAM. I've created a new user and can
+SSH into it from host machine and use it just like I use a
+server!. I will put up the notes of my BSD adventure here
+periodically.&lt;/p&gt;
+&lt;p&gt;The feeling of using a BSD is amazing :-)&lt;/p&gt;
+&lt;blockquote&gt;
+&lt;strong&gt;Update&lt;/strong&gt;: I forgot to add masquerading step, I've added it
+now.&lt;/blockquote&gt;
+&lt;/div&gt;
+</content><category term="bsd"/><category term="debian"/><category term="netbsd"/><category term="qemu"/><category term="vde"/><category term="networking"/></entry></feed>

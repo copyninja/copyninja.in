@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="utf-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom"><title>Random Ramblings - plan9</title><link href="https://copyninja.in/" rel="alternate"/><link href="https://copyninja.in/feeds/plan9.atom.xml" rel="self"/><id>https://copyninja.in/</id><updated>2015-02-21T12:32:00+05:30</updated><subtitle>Random thoughts shooting out of volatile mind</subtitle><entry><title>Running Plan9 using 9vx - using vx32 sandboxing library</title><link href="https://copyninja.in/blog/plan9_on_9vx_linux.html" rel="alternate"/><published>2015-02-21T12:32:00+05:30</published><updated>2015-02-21T12:32:00+05:30</updated><author><name>copyninja</name></author><id>tag:copyninja.in,2015-02-21:/blog/plan9_on_9vx_linux.html</id><summary type="html">&lt;p class="first last"&gt;Running Plan9 using 9vx, a vx32 sandboxing library.&lt;/p&gt;
+</summary><content type="html">&lt;p&gt;Now a days I'm more and more attracted towards Plan9, an Operating
+System meant to be the successor of UNIX and created by same people
+who created original UNIX. I'm always baffled by the simplicity of
+Plan9. Sadly Plan9 never took off for whatever reasons.&lt;/p&gt;
+&lt;p&gt;I've been for a while trying to run Plan9, I ran Plan9 on Raspberry Pi
+model B using 9pi, but I couldn't experiment with it more due to some
+restrictions in my home setup.&lt;/p&gt;
+&lt;p&gt;I installed original Plan9 4th Edition from Bell labs (now part of
+Alcatel-Lucent), I will write about it in on different post. But
+running virtual machine on my system is again PITA as system is
+already old (3 and half year). I came across the &lt;a class="reference external" href="http://swtch.com/9vx/"&gt;9vx&lt;/a&gt; which is port of Plan9 for FreeBSD, Linux
+and Mac OSX by Russ Cox.&lt;/p&gt;
+&lt;p&gt;I downloaded original 9vx version 0.9.12 from Russ's page linked
+above. The archive contains a Plan9 rootfs along with precompiled 9vx
+binaries for Linux, FreeBSD and Mac OS X. I ran the Linux binary but
+it crashed.&lt;/p&gt;
+&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;./9vx.Linux&lt;span class="w"&gt; &lt;/span&gt;-u&lt;span class="w"&gt; &lt;/span&gt;glenda
+&lt;/pre&gt;&lt;/div&gt;
+&lt;p&gt;I was seeing some illegal instruction error in dmesg. I didn't bother
+to do more investigation.&lt;/p&gt;
+&lt;p&gt;A bit of googling showed me Arch Linux's &lt;a class="reference external" href="https://wiki.archlinux.org/index.php/9vx"&gt;wiki page on 9vx&lt;/a&gt;. I got errors trying to
+compile the original vx32 from &lt;a class="reference external" href="https://bitbucket.org/rsc/vx32"&gt;rsc's repository&lt;/a&gt; but later saw that AUR 9vx package
+is built from different repository forked from rsc's found &lt;a class="reference external" href="https://bitbucket.org/rminnich/vx32"&gt;here&lt;/a&gt;.&lt;/p&gt;
+&lt;p&gt;I cloned the repository to local and compiled it, I don't really
+remember if I had installed any additional packages. But if you get
+error you will know what additional thing is required. After
+compilation the 9vx binary is found inside &lt;cite&gt;src/9vx/9vx&lt;/cite&gt;. I used this
+newly compiled 9vx to run the the rootfs I downloaded from Russ's
+website.&lt;/p&gt;
+&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;9vx&lt;span class="w"&gt; &lt;/span&gt;-u&lt;span class="w"&gt; &lt;/span&gt;glenda&lt;span class="w"&gt; &lt;/span&gt;-r&lt;span class="w"&gt; &lt;/span&gt;/path/to/extracted/9vx-0.9.12/
+&lt;/pre&gt;&lt;/div&gt;
+&lt;p&gt;This launches Plan9 and allows you to work inside Plan9. The good part
+is its not resource hungry and still looks like you have a VM running
+with Plan9 on it.&lt;/p&gt;
+&lt;p&gt;But there seems to be a better way to do this directly from plan9 iso
+from bell labs. It can be found on &lt;a class="reference external" href="http://9fans.net/archive/2010/10/14"&gt;9fans list&lt;/a&gt;. Now I'm going to try that out
+too :-). And in next post I will share my experience of using Plan9 on
+Qemu.&lt;/p&gt;
+</content><category term="plan9"/><category term="plan9"/><category term="debian"/><category term="9vx"/></entry></feed>

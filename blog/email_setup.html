@@ -1,0 +1,120 @@
+<!DOCTYPE html><html lang="en"><head><link href="https://fonts.googleapis.com/css?family=Cantarell" rel="stylesheet"><title>My personal Email setup - Notmuch, mbsync, postfix and dovecot</title><meta http-equiv="Content-Type" content="text/html; charset=UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1"><link href="https://copyninja.in/feeds/all.atom.xml" type="application/atom+xml" rel="alternate" title="Random Ramblings Full Atom Feed"><link href="https://copyninja.in/feeds/{slug}.atom.xml" type="application/atom+xml" rel="alternate" title="Random Ramblings Categories Atom Feed"><link rel="stylesheet" type="text/css" href="/theme/css/pygments.css"><link rel="stylesheet" type="text/css" href="/theme/css/default.css"><meta name="tags" content="email"><meta name="tags" content="notmuch"><meta name="tags" content="mbsync"></head><body><div id="header" class="body"><div id="navigation"> | <a href="https://copyninja.in">Home</a> | | <a href="https://copyninja.in/about">About</a> | | <a href="https://copyninja.in/contact">Contact</a> | | <a href="https://copyninja.in/categories.html">Categories</a> | | <a href="https://copyninja.in/tags.html">Tags</a> | </div><h1><a href="https://copyninja.in/blog/email_setup.html">My personal Email setup - Notmuch, mbsync, postfix and dovecot</a></h1></div><div id="content"><section id="content" class="body"><footer class="post-info"><p> Posted on Dec 23, 2017 By copyninja under devops </p></abbr></footer><div class="entry-content"><p>I've been using personal email setup for quite long and have not documented it anywhere. Recently when I changed my laptop (a post is pending about it) I got lost trying to recreate my local mail setup. So this post is a self documentation so that I don't have to struggle again to get it right.</p><div class="section" id="server-side"><h2>Server Side</h2><p>I run my own mail server and I use <em>postfix</em> as SMTP server and <em>Dovecot</em> for the IMAP purpose. I'm not going into detail of setting those up as my setup was mostly done by using scripts created by Jonas for <em>Redpill</em> infrastructure. What redpill is?. (In jonas's own words)</p><blockquote> &lt;jonas&gt; Redpill is a concept - a way to setup Debian hosts to collaborate across organisations &lt;jonas&gt; I develop the concept, and use it for the first ever Redpill network-of-networks redpill.dk, involving my own network (jones.dk), my main client's network (homebase.dk), a network in Germany including Skolelinux Germany (free-owl.de), and Vasudev's network (copyninja.info)</blockquote><p>Along with that I have a dovecot sieve filtering to classify on high level mails into various folders depending on from where they originate. All the rules live in the <cite>~/dovecot.sieve</cite> file under every account which has a mail address.</p><p>Again I'm not going into detail of how to set these things up, as its not goal of my this post.</p></div><div class="section" id="on-my-laptop"><h2>On my Laptop</h2><p>On my laptop I've following 4 parts setup</p><ol class="arabic simple"><li>Mail syncing : Done using mbsync command</li><li>Classification: Done using notmuch</li><li>Reading: Done using notmuch-emacs</li><li>Mail sending: Done using postfix running as relay server and SMTP client.</li></ol></div><div class="section" id="mail-syncing"><h2>Mail Syncing</h2><p>Mail syncing is done using <cite>mbsync</cite> tool, I was previously user of offlineimap and recently switched to <cite>mbsync</cite> as I felt it more lighter and simpler to configure than <cite>offlineimap</cite>. <cite>mbsync</cite> command is provided by package <cite>isync</cite>.</p><p>Configuration file is <em>~/.mbsyncrc</em>. Below is my sample content with some private things redacted.</p><div class="highlight"><pre><span></span><span class="na">IMAPAccount  copyninja</span>
+<span class="na">Host imap.copyninja.info</span>
+<span class="na">User vasudev</span>
+<span class="na">PassCmd      &quot;gpg -q --for-your-eyes-only --no-tty --exit-on-status-write-error --batch --passphrase-file ~/path/to/passphrase.txt -d ~/path/to/mailpass.gpg&quot;</span>
+<span class="na">SSLType IMAPS</span>
+<span class="na">SSLVersion TLSv1.2</span>
+<span class="na">CertificateFile /etc/ssl/certs/ca-certificates.crt</span>
+
+
+<span class="na">IMAPAccount gmail-kamathvasudev</span>
+<span class="na">Host imap.gmail.com</span>
+<span class="na">User kamathvasudev@gmail.com</span>
+<span class="na">PassCmd &quot;gpg -q --for-your-eyes-only --no-tty --exit-on-status-write-error --batch --passphrase-file ~/path/to/passphrase.txt -d ~/path/to/mailpass.gpg&quot;</span>
+<span class="na">SSLType IMAPS</span>
+<span class="na">SSLVersion TLSv1.2</span>
+<span class="na">CertificateFile /etc/ssl/certs/ca-certificates.crt</span>
+
+<span class="na">IMAPStore copyninja-remote</span>
+<span class="na">Account copyninja</span>
+
+<span class="na">IMAPStore gmail-kamathvasudev-remote</span>
+<span class="na">Account gmail-kamathvasudev</span>
+
+<span class="na">MaildirStore copyninja-local</span>
+<span class="na">Path ~/Mail/vasudev-copyninja.info/</span>
+<span class="na">Inbox ~/Mail/vasudev-copyninja.info/INBOX</span>
+
+<span class="na">MaildirStore gmail-kamathvasudev-local</span>
+<span class="na">Path ~/Mail/Gmail-1/</span>
+<span class="na">Inbox ~/Mail/Gmail-1/INBOX</span>
+
+<span class="na">Channel copyninja</span>
+<span class="na">Master</span><span class="w"> </span><span class="o">:</span><span class="s">copyninja-remote:</span>
+<span class="na">Slave</span><span class="w"> </span><span class="o">:</span><span class="s">copyninja-local:</span>
+<span class="na">Patterns *</span>
+<span class="na">Create Both</span>
+<span class="na">SyncState *</span>
+<span class="na">Sync All</span>
+
+<span class="na">Channel gmail-kamathvasudev</span>
+<span class="na">Master</span><span class="w"> </span><span class="o">:</span><span class="s">gmail-kamathvasudev-remote:</span>
+<span class="na">Slave</span><span class="w"> </span><span class="o">:</span><span class="s">gmail-kamathvasudev-local:</span>
+<span class="c1"># Exclude everything under the internal [Gmail] folder, except the interesting folders</span>
+<span class="na">Patterns * ![Gmail]*</span>
+<span class="na">Create Both</span>
+<span class="na">SyncState *</span>
+<span class="na">Sync All</span>
+</pre></div><p>Explanation for some interesting part in above configuration. One is the <em>PassCmd</em> which allows you to provide shell command to obtain the password for the account. This avoids filling in the password in configuration file. I'm using symmetric encryption with gpg and storing password some where on my disk. Which is of course just safe guarded by Unix ACL.</p><p>I actually wanted to use my public key to encrypt the file but unlocking the file when script is run in background or via systemd looks difficult (or looked nearly impossible). If you have better suggestion I'm all ears :-).</p><p>Next instruction part is <em>Patterns</em>. This allows you to selectively sync mail from your mail server. This was really helpful for me to exclude all crappy <em>[Gmail]/</em> folders.</p></div><div class="section" id="mail-classification"><h2>Mail Classification</h2><p>Once mail is locally on your device, we need a way to read the mails easily in a mail reader. My original setup was serving synced <em>Maildir</em> using local dovecot instance and read it in <em>Gnus</em>. This setup was bit of a over kill with all server software setups but inability of Gnus to not cope well with <em>Maildir</em> format this was best way to do it. This setup also has a disadvantage, that is searching a mail quickly when you have huge pile of mail to go through. This is where <em>notmuch</em> comes into picture.</p><p><em>notmuch</em> allows me to easily index through Gigabytes of my mail archives and get what I need very easily. I've created a small script which combines executing of <cite>mbsync</cite> and <cite>notmuch</cite> execution. I tag mails based on the Maildirs which are actually created on server side using dovecot sieve. Below is my full shell script which is doing task of syncing classification and deleting of spams.</p><div class="highlight"><pre><span></span><span class="ch">#!/bin/sh</span>
+
+<span class="nv">MBSYNC</span><span class="o">=</span><span class="k">$(</span>pgrep<span class="w"> </span>mbsync<span class="k">)</span>
+<span class="nv">NOTMUCH</span><span class="o">=</span><span class="k">$(</span>pgrep<span class="w"> </span>notmuch<span class="k">)</span>
+
+<span class="k">if</span><span class="w"> </span><span class="o">[</span><span class="w"> </span>-n<span class="w"> </span><span class="s2">&quot;</span><span class="nv">$MBSYNC</span><span class="s2">&quot;</span><span class="w"> </span>-o<span class="w"> </span>-n<span class="w"> </span><span class="s2">&quot;</span><span class="nv">$NOTMUCH</span><span class="s2">&quot;</span><span class="w"> </span><span class="o">]</span><span class="p">;</span><span class="w"> </span><span class="k">then</span>
+<span class="w">   </span><span class="nb">echo</span><span class="w"> </span><span class="s2">&quot;Already running one instance of mail-sync. Exiting...&quot;</span>
+<span class="w">         </span><span class="nb">exit</span><span class="w"> </span><span class="m">0</span>
+<span class="k">fi</span>
+
+<span class="nb">echo</span><span class="w"> </span><span class="s2">&quot;Deleting messages tagged as *deleted*&quot;</span>
+notmuch<span class="w"> </span>search<span class="w"> </span>--format<span class="o">=</span>text0<span class="w"> </span>--output<span class="o">=</span>files<span class="w"> </span>tag:deleted<span class="w"> </span><span class="p">|</span>xargs<span class="w"> </span>-0<span class="w"> </span>--no-run-if-empty<span class="w"> </span>rm<span class="w"> </span>-v
+
+<span class="nb">echo</span><span class="w"> </span><span class="s2">&quot;Moving spam to Spam folder&quot;</span>
+notmuch<span class="w"> </span>search<span class="w"> </span>--format<span class="o">=</span>text0<span class="w"> </span>--output<span class="o">=</span>files<span class="w"> </span>tag:Spam<span class="w"> </span>and<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>to:vasudev@copyninja.info<span class="w"> </span><span class="p">|</span><span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>xargs<span class="w"> </span>-0<span class="w"> </span>-I<span class="w"> </span><span class="o">{}</span><span class="w"> </span>--no-run-if-empty<span class="w"> </span>mv<span class="w"> </span>-v<span class="w"> </span><span class="o">{}</span><span class="w"> </span>~/Mail/vasudev-copyninja.info/Spam/cur
+notmuch<span class="w"> </span>search<span class="w"> </span>--format<span class="o">=</span>text0<span class="w"> </span>--output<span class="o">=</span>files<span class="w"> </span>tag:Spam<span class="w"> </span>and
+<span class="w">  </span>to:vasudev-debian@copyninja.info<span class="w"> </span><span class="p">|</span><span class="w"> </span><span class="se">\</span>
+<span class="w">     </span>xargs<span class="w"> </span>-0<span class="w"> </span>-I<span class="w"> </span><span class="o">{}</span><span class="w"> </span>--no-run-if-empty<span class="w"> </span>mv<span class="w"> </span>-v<span class="w"> </span><span class="o">{}</span><span class="w"> </span>~/Mail/vasudev-copyninja.info/Spam/cur
+
+
+<span class="nv">MDIR</span><span class="o">=</span><span class="s2">&quot;vasudev-copyninja.info vasudev-debian Gmail-1&quot;</span>
+mbsync<span class="w"> </span>-Va
+notmuch<span class="w"> </span>new
+
+<span class="k">for</span><span class="w"> </span>mdir<span class="w"> </span><span class="k">in</span><span class="w"> </span><span class="nv">$MDIR</span><span class="p">;</span><span class="w"> </span><span class="k">do</span>
+<span class="w">    </span><span class="nb">echo</span><span class="w"> </span><span class="s2">&quot;Processing </span><span class="nv">$mdir</span><span class="s2">&quot;</span>
+<span class="w">    </span><span class="k">for</span><span class="w"> </span>fdir<span class="w"> </span><span class="k">in</span><span class="w"> </span><span class="k">$(</span>ls<span class="w"> </span>-d<span class="w"> </span>/home/vasudev/Mail/<span class="nv">$mdir</span>/*<span class="k">)</span><span class="p">;</span><span class="w"> </span><span class="k">do</span>
+<span class="w">      </span><span class="k">if</span><span class="w"> </span><span class="o">[</span><span class="w"> </span><span class="k">$(</span>basename<span class="w"> </span><span class="nv">$fdir</span><span class="k">)</span><span class="w"> </span>!<span class="o">=</span><span class="w"> </span><span class="s2">&quot;INBOX&quot;</span><span class="w"> </span><span class="o">]</span><span class="p">;</span><span class="w"> </span><span class="k">then</span>
+<span class="w">          </span><span class="nb">echo</span><span class="w"> </span><span class="s2">&quot;Tagging for </span><span class="k">$(</span>basename<span class="w"> </span><span class="nv">$fdir</span><span class="k">)</span><span class="s2">&quot;</span>
+<span class="w">          </span>notmuch<span class="w"> </span>tag<span class="w"> </span>+<span class="k">$(</span>basename<span class="w"> </span><span class="nv">$fdir</span><span class="k">)</span><span class="w"> </span>-inbox<span class="w"> </span>--<span class="w"> </span>folder:<span class="nv">$mdir</span>/<span class="k">$(</span>basename<span class="w"> </span><span class="nv">$fdir</span><span class="k">)</span>
+<span class="w">      </span><span class="k">fi</span>
+<span class="w">    </span><span class="k">done</span>
+<span class="k">done</span>
+</pre></div><p>So before running mbsync I search for all mails tagged as <em>deleted</em> and delete them from system. Next I look for mails tagged as <em>Spam</em> on both my accounts and move it to Spam folder. Yeah you got it right these are mails escaping the spam filter and landing in my inbox and personally marked as Spam.</p><p>After running mbsync I tag mails based on their folder (searching string <em>folder:</em>). This allows me easily get contents of lets say a mailing list without remembering the list address.</p></div><div class="section" id="reading-mails"><h2>Reading Mails</h2><p>Now that we have synced and classified mail its time to setup the reading part. I use notmuch-emacs interface to read the mails. I use <em>Spacemacs</em> flavor of emacs so I took some time to write down the a private layer which brings together all my keybindings and classification in one place and does not clutter my entire <em>.spacemacs</em> file. You can find the code for my private layer in <a class="reference external" href="https://source.copyninja.info/notmuch-emacs-layer.git/">notmuch-emacs-layer repository</a></p></div><div class="section" id="sending-mails"><h2>Sending Mails</h2><p>Well its not sufficient that if we can read mails, we need to be able to reply to mail. And this was the slightly tricky part where I recently got lost and had to write this post so that I don't forget it again. (And of course don't have to refer some outdated posts on web).</p><p>My setup to send mails is using <em>postfix</em> as SMTP client with my own SMTP server as relayhost for it. The problem of relaying is it's not for the hosts with dynamic IP. There are couple of ways to allow hosts with dynamic IP to use relay servers, one is put the IP address from where mail will originate into <em>my_network</em> or second use SASL authentication.</p><p>My preferred way is use of SASL authentication. For this I first had to create a separate account one for each machine which is going to relay the mails to my main server. Idea is to not use my primary account for SASL authentication. (Originally I was using primary account, but Jonas gave this idea of account per road runner).</p><div class="highlight"><pre><span></span>adduser<span class="w"> </span>&lt;hostname&gt;_relay
+</pre></div><p>Here replace &lt;hostname&gt; with name of your laptop/desktop or whatever you are using. Now we need to adjust postfix to act as relaying server. So add following lines to postfix configuration</p><div class="highlight"><pre><span></span><span class="c1"># SASL authentication</span>
+<span class="na">smtp_sasl_auth_enable</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">yes</span>
+<span class="na">smtp_tls_security_level</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">encrypt</span>
+<span class="na">smtp_sasl_tls_security_options</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">noanonymous</span>
+<span class="na">relayhost</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">[smtp.copyninja.info]:submission</span>
+<span class="na">smtp_sasl_password_maps</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">hash:/etc/postfix/sasl_passwd</span>
+</pre></div><p>So here relayhost is the server name which your postfix instance will be using to relay mails forward into internet. <em>:submission</em> part tells postfix to forward mail on to port 587 (secure). <em>smtp_sasl_tls_security_options</em> is set to disallow anonymous connection. This is must so that relay server trusts your mobile host and agrees to forward the mail for you.</p><p><em>/etc/postfix/sasl_passwd</em> is the file where you need to store password for account to be used for SASL authentication with server. Put following content into it.</p><div class="highlight"><pre><span></span>[smtp.example.com]:submission    user:password
+</pre></div><p>Replace smtp.example.com with your SMTP server name which you have put in <em>relayhost</em> configuration. Replace user with &lt;hostname&gt;_relay user you created and its password.</p><p>To secure the sasl_passwd file and create a hash of it for postfix use following command.</p><div class="highlight"><pre><span></span>chown<span class="w"> </span>root:root<span class="w"> </span>/etc/postfix/sasl_passwd
+chmod<span class="w"> </span><span class="m">0600</span><span class="w"> </span>/etc/postfix/sasl_passwd
+postmap<span class="w"> </span>/etc/postfix/sasl_passwd
+</pre></div><p>The last command will create /etc/postfix/sasl_passwd.db file which is hash of your file /etc/postfix/sasl_passwd with same owner and permission. Now reload the postfix and check if mail makes out of your system using mail command.</p></div><div class="section" id="bonus-part"><h2>Bonus Part</h2><p>Well since I've a script created above bringing together mail syncing and classification. I went ahead and created a systemd timer to periodically sync mails in the background. In my case every 10 minutes. Below is <em>mailsync.timer</em> file.</p><div class="highlight"><pre><span></span><span class="k">[Unit]</span>
+<span class="na">Description</span><span class="o">=</span><span class="s">Check Mail Every 10 minutes</span>
+<span class="na">RefuseManualStart</span><span class="o">=</span><span class="s">no</span>
+<span class="na">RefuseManualStop</span><span class="o">=</span><span class="s">no</span>
+
+<span class="k">[Timer]</span>
+<span class="na">Persistent</span><span class="o">=</span><span class="s">false</span>
+<span class="na">OnBootSec</span><span class="o">=</span><span class="s">5min</span>
+<span class="na">OnUnitActiveSec</span><span class="o">=</span><span class="s">10min</span>
+<span class="na">Unit</span><span class="o">=</span><span class="s">mailsync.service</span>
+
+<span class="k">[Install]</span>
+<span class="na">WantedBy</span><span class="o">=</span><span class="s">default.target</span>
+</pre></div><p>Below is <em>mailsync.service</em> which is needed by mailsync.timer to execute our scripts.</p><div class="highlight"><pre><span></span><span class="k">[Unit]</span>
+<span class="na">Description</span><span class="o">=</span><span class="s">Check Mail</span>
+<span class="na">RefuseManualStart</span><span class="o">=</span><span class="s">no</span>
+<span class="na">RefuseManualStop</span><span class="o">=</span><span class="s">yes</span>
+
+<span class="k">[Service]</span>
+<span class="na">Type</span><span class="o">=</span><span class="s">oneshot</span>
+<span class="na">ExecStart</span><span class="o">=</span><span class="s">/usr/local/bin/mail-sync</span>
+<span class="na">StandardOutput</span><span class="o">=</span><span class="s">syslog</span>
+<span class="na">StandardError</span><span class="o">=</span><span class="s">syslog</span>
+</pre></div><p>Put these files under /etc/systemd/user and run below command to enable them.</p><div class="highlight"><pre><span></span>systemctl<span class="w"> </span><span class="nb">enable</span><span class="w"> </span>--user<span class="w"> </span>mailsync.timer
+systemctl<span class="w"> </span><span class="nb">enable</span><span class="w"> </span>--user<span class="w"> </span>mailsync.service
+systemctl<span class="w"> </span>start<span class="w"> </span>--user<span class="w"> </span>mailsync.timer
+</pre></div><p>So that's how I've sync and send mail from my system. I came to know about <em>afew</em> from Jonas Smedegaard who also proof read this post. So next step I will try to improve my notmuch configuration using afew and of course a post will follow after that :-).</p></div></div><div id="footer"><p><italic>Tagged as: email, mbsync, notmuch, </italic></p></section></div><hr><div id="footer"> Site Proudly powered by <a href="http://getpelican.com/">Pelican</a></div></body></html>

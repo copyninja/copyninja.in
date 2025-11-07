@@ -1,0 +1,135 @@
+<!DOCTYPE html><html lang="en"><head><link href="https://fonts.googleapis.com/css?family=Cantarell" rel="stylesheet"><title>Note to Self: Growing the Root File System on First Boot</title><meta http-equiv="Content-Type" content="text/html; charset=UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1"><link href="https://copyninja.in/feeds/all.atom.xml" type="application/atom+xml" rel="alternate" title="Random Ramblings Full Atom Feed"><link href="https://copyninja.in/feeds/{slug}.atom.xml" type="application/atom+xml" rel="alternate" title="Random Ramblings Categories Atom Feed"><link rel="stylesheet" type="text/css" href="/theme/css/pygments.css"><link rel="stylesheet" type="text/css" href="/theme/css/default.css"><meta name="tags" content="resize2fs"><meta name="tags" content="notetoself"></head><body><div id="header" class="body"><div id="navigation"> | <a href="https://copyninja.in">Home</a> | | <a href="https://copyninja.in/about">About</a> | | <a href="https://copyninja.in/contact">Contact</a> | | <a href="https://copyninja.in/categories.html">Categories</a> | | <a href="https://copyninja.in/tags.html">Tags</a> | </div><h1><a href="https://copyninja.in/blog/grow_rootfs.html">Note to Self: Growing the Root File System on First Boot</a></h1></div><div id="content"><section id="content" class="body"><footer class="post-info"><p> Posted on Feb 16, 2019 By copyninja under devops </p></abbr></footer><div class="entry-content"><p>These 2 are the use cases I came across for expanding root file system.</p><ol class="arabic simple"><li>RaspberryPi images which comes in smaller image size like 1GB which you write bigger size SD cards like 32GB but you want to use full 32GB of space when system comes up.</li><li>You have a VM image which is contains basic server operating system and you want to provision the same as a VM with much larger size root file system.</li></ol><p>My current use case was second but I learnt the trick from 1, that is the <a class="reference external" href="https://github.com/Debian/raspi3-image-spec">RaspberryPi3 image spec</a> by Debian project.</p><p>Idea behind the expanding root file system is first expanding the root file system to full available size and then run resize2fs on the expanded partition to grow file system. <em>resize2fs</em> is a tool specific for ext2/3/4 file system. But this needs to be done before the file system is mounted.</p><p>Here is my modified script from <a class="reference external" href="https://github.com/Debian/raspi3-image-spec/blob/master/rpi3-resizerootfs">raspi3-image-spec repo</a>. Only difference is I've changed the logic of extracting root partition device to my need, and of course added comments based on my understanding.</p><pre class="code shell literal-block">
+<span class="ch">#!/bin/sh
+</span><span class="w">
+</span><span class="c1"># Just extracts root partition and removes partition number to get the device
+# name eg. /dev/sda1 becomes /dev/sda
+</span><span class="nv">roottmp</span><span class="o">=</span><span class="k">$(</span>lsblk<span class="w"> </span>-l<span class="w"> </span>-o<span class="w"> </span>NAME,MOUNTPOINT<span class="w"> </span><span class="p">|</span><span class="w"> </span>grep<span class="w"> </span><span class="s1">'/$'</span><span class="k">)</span><span class="w">
+</span><span class="nv">rootpart</span><span class="o">=</span>/dev/<span class="si">${</span><span class="nv">roottmp</span><span class="p">%% */</span><span class="si">}</span><span class="w">
+</span><span class="nv">rootdev</span><span class="o">=</span><span class="si">${</span><span class="nv">rootpart</span><span class="p">%1</span><span class="si">}</span><span class="w">
+
+</span><span class="c1"># Use sfdisk to extend partition to all available free space on device.
+</span>flock<span class="w"> </span><span class="nv">$rootdev</span><span class="w"> </span>sfdisk<span class="w"> </span>-f<span class="w"> </span><span class="nv">$rootdev</span><span class="w"> </span>-N<span class="w"> </span><span class="m">2</span><span class="w"> </span><span class="s">&lt;&lt;EOF
+,+
+EOF</span><span class="w">
+
+</span>sleep<span class="w"> </span><span class="m">5</span><span class="w">
+
+</span><span class="c1"># Wait for all pending udev events to be handled
+</span>udevadm<span class="w"> </span>settle<span class="w">
+
+</span>sleep<span class="w"> </span><span class="m">5</span><span class="w">
+
+</span><span class="c1"># detect the changes to partition (we extended it).
+</span>flock<span class="w"> </span><span class="nv">$rootdev</span><span class="w"> </span>partprobe<span class="w"> </span><span class="nv">$rootdev</span><span class="w">
+
+</span><span class="c1"># remount the root partition in read write mode
+</span>mount<span class="w"> </span>-o<span class="w"> </span>remount,rw<span class="w"> </span><span class="nv">$rootpart</span><span class="w">
+
+</span><span class="c1"># Finally grow the file system on root partition
+</span>resize2fs<span class="w"> </span><span class="nv">$rootpart</span><span class="w">
+
+</span><span class="nb">exit</span><span class="w"> </span>0fs
+</pre><p>raspi3-image-spec uses <a class="reference external" href="https://github.com/Debian/raspi3-image-spec/blob/master/rpi3-resizerootfs.service">sytemd service</a> file to execute this script just before any file system is mounted. This is done by a making service execute before <em>local-fs.pre</em> target. From the man page for <em>systemd.special</em></p><blockquote><dl class="docutils"><dt>local-fs.target</dt><dd>systemd-fstab-generator(3) automatically adds dependencies of type Before= to all mount units that refer to local mount points for this target unit. In addition, it adds dependencies of type Wants= to this target unit for those mounts listed in /etc/fstab that have the auto mount option set.</dd></dl></blockquote><p>Service also disables itself on executing to avoid re-runs on every boot. I've used the service file from raspi3-image-spec as is.</p><div class="section" id="testing-with-vm"><h2>Testing with VM</h2><p><em>raspi3-image-spec</em> is well tested, but I wanted to make sure this works with my use case for VM. Since I didn't have any spare physical disks to experiment with I used kpartx with raw file images. Here is what I did</p><ol class="arabic simple"><li>Created a stretch image using vmdb2 with grub installed. Image size is 1.5G</li><li>I created another raw disk using fallocate of 4G size.</li><li>I created a partition on 4G disk.</li><li>Loop mounted the disk and wrote 1.5G image on it using dd</li><li>Finally created a VM using virt-install with this loop mounted device as root disk.</li></ol><p>Below is my vmdb configuration yml again derived from <a class="reference external" href="https://github.com/Debian/raspi3-image-spec/blob/master/raspi3.yaml">raspi3-image-spec</a> one with some modifications to suit my needs.</p><pre class="code yaml literal-block">
+<span class="c1"># See https://wiki.debian.org/RaspberryPi3 for known issues and more details.</span><span class="w">
+</span><span class="nt">steps</span><span class="p">:</span><span class="w">
+</span><span class="p-Indicator">-</span><span class="w"> </span><span class="nt">mkimg</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;{{</span><span class="nv"> </span><span class="s">output</span><span class="nv"> </span><span class="s">}}&quot;</span><span class="w">
+  </span><span class="nt">size</span><span class="p">:</span><span class="w"> </span><span class="l-Scalar-Plain">1.5G</span><span class="w">
+
+</span><span class="p-Indicator">-</span><span class="w"> </span><span class="nt">mklabel</span><span class="p">:</span><span class="w"> </span><span class="l-Scalar-Plain">msdos</span><span class="w">
+  </span><span class="nt">device</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;{{</span><span class="nv"> </span><span class="s">output</span><span class="nv"> </span><span class="s">}}&quot;</span><span class="w">
+
+</span><span class="p-Indicator">-</span><span class="w"> </span><span class="nt">mkpart</span><span class="p">:</span><span class="w"> </span><span class="l-Scalar-Plain">primary</span><span class="w">
+  </span><span class="nt">device</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;{{</span><span class="nv"> </span><span class="s">output</span><span class="nv"> </span><span class="s">}}&quot;</span><span class="w">
+  </span><span class="nt">start</span><span class="p">:</span><span class="w"> </span><span class="l-Scalar-Plain">0%</span><span class="w">
+  </span><span class="nt">end</span><span class="p">:</span><span class="w"> </span><span class="l-Scalar-Plain">100%</span><span class="w">
+  </span><span class="nt">tag</span><span class="p">:</span><span class="w"> </span><span class="l-Scalar-Plain">/</span><span class="w">
+
+</span><span class="p-Indicator">-</span><span class="w"> </span><span class="nt">kpartx</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;{{</span><span class="nv"> </span><span class="s">output</span><span class="nv"> </span><span class="s">}}&quot;</span><span class="w">
+
+</span><span class="p-Indicator">-</span><span class="w"> </span><span class="nt">mkfs</span><span class="p">:</span><span class="w"> </span><span class="l-Scalar-Plain">ext4</span><span class="w">
+  </span><span class="nt">partition</span><span class="p">:</span><span class="w"> </span><span class="l-Scalar-Plain">/</span><span class="w">
+  </span><span class="nt">label</span><span class="p">:</span><span class="w"> </span><span class="l-Scalar-Plain">RASPIROOT</span><span class="w">
+
+</span><span class="p-Indicator">-</span><span class="w"> </span><span class="nt">mount</span><span class="p">:</span><span class="w"> </span><span class="l-Scalar-Plain">/</span><span class="w">
+
+</span><span class="p-Indicator">-</span><span class="w"> </span><span class="nt">unpack-rootfs</span><span class="p">:</span><span class="w"> </span><span class="l-Scalar-Plain">/</span><span class="w">
+
+</span><span class="p-Indicator">-</span><span class="w"> </span><span class="nt">debootstrap</span><span class="p">:</span><span class="w"> </span><span class="l-Scalar-Plain">stretch</span><span class="w">
+  </span><span class="nt">mirror</span><span class="p">:</span><span class="w"> </span><span class="l-Scalar-Plain">http://localhost:3142/deb.debian.org/debian</span><span class="w">
+  </span><span class="nt">target</span><span class="p">:</span><span class="w"> </span><span class="l-Scalar-Plain">/</span><span class="w">
+  </span><span class="nt">variant</span><span class="p">:</span><span class="w"> </span><span class="l-Scalar-Plain">minbase</span><span class="w">
+  </span><span class="nt">components</span><span class="p">:</span><span class="w">
+  </span><span class="p-Indicator">-</span><span class="w"> </span><span class="l-Scalar-Plain">main</span><span class="w">
+  </span><span class="p-Indicator">-</span><span class="w"> </span><span class="l-Scalar-Plain">contrib</span><span class="w">
+  </span><span class="p-Indicator">-</span><span class="w"> </span><span class="l-Scalar-Plain">non-free</span><span class="w">
+  </span><span class="nt">unless</span><span class="p">:</span><span class="w"> </span><span class="l-Scalar-Plain">rootfs_unpacked</span><span class="w">
+
+</span><span class="c1"># TODO(https://bugs.debian.org/877855): remove this workaround once</span><span class="w">
+</span><span class="c1"># debootstrap is fixed</span><span class="w">
+</span><span class="p-Indicator">-</span><span class="w"> </span><span class="nt">chroot</span><span class="p">:</span><span class="w"> </span><span class="l-Scalar-Plain">/</span><span class="w">
+  </span><span class="nt">shell</span><span class="p">:</span><span class="w"> </span><span class="p-Indicator">|</span><span class="w">
+    </span><span class="no">echo 'deb http://deb.debian.org/debian buster main contrib non-free' &gt; /etc/apt/sources.list</span><span class="w">
+    </span><span class="no">apt-get update</span><span class="w">
+  </span><span class="nt">unless</span><span class="p">:</span><span class="w"> </span><span class="l-Scalar-Plain">rootfs_unpacked</span><span class="w">
+
+</span><span class="p-Indicator">-</span><span class="w"> </span><span class="nt">apt</span><span class="p">:</span><span class="w"> </span><span class="l-Scalar-Plain">install</span><span class="w">
+  </span><span class="nt">packages</span><span class="p">:</span><span class="w">
+  </span><span class="p-Indicator">-</span><span class="w"> </span><span class="l-Scalar-Plain">ssh</span><span class="w">
+  </span><span class="p-Indicator">-</span><span class="w"> </span><span class="l-Scalar-Plain">parted</span><span class="w">
+  </span><span class="p-Indicator">-</span><span class="w"> </span><span class="l-Scalar-Plain">dosfstools</span><span class="w">
+  </span><span class="p-Indicator">-</span><span class="w"> </span><span class="l-Scalar-Plain">linux-image-amd64</span><span class="w">
+  </span><span class="nt">tag</span><span class="p">:</span><span class="w"> </span><span class="l-Scalar-Plain">/</span><span class="w">
+  </span><span class="nt">unless</span><span class="p">:</span><span class="w"> </span><span class="l-Scalar-Plain">rootfs_unpacked</span><span class="w">
+
+</span><span class="p-Indicator">-</span><span class="w"> </span><span class="nt">grub</span><span class="p">:</span><span class="w"> </span><span class="l-Scalar-Plain">bios</span><span class="w">
+  </span><span class="nt">tag</span><span class="p">:</span><span class="w"> </span><span class="l-Scalar-Plain">/</span><span class="w">
+
+</span><span class="p-Indicator">-</span><span class="w"> </span><span class="nt">cache-rootfs</span><span class="p">:</span><span class="w"> </span><span class="l-Scalar-Plain">/</span><span class="w">
+  </span><span class="nt">unless</span><span class="p">:</span><span class="w"> </span><span class="l-Scalar-Plain">rootfs_unpacked</span><span class="w">
+
+</span><span class="p-Indicator">-</span><span class="w"> </span><span class="nt">shell</span><span class="p">:</span><span class="w"> </span><span class="p-Indicator">|</span><span class="w">
+     </span><span class="no">echo &quot;experimental&quot; &gt; &quot;${ROOT?}/etc/hostname&quot;</span><span class="w">
+
+     </span><span class="no"># '..VyaTFxP8kT6' is crypt.crypt('raspberry', '..')</span><span class="w">
+     </span><span class="no">sed -i 's,root:[^:]*,root:..VyaTFxP8kT6,' &quot;${ROOT?}/etc/shadow&quot;</span><span class="w">
+
+     </span><span class="no">sed -i 's,#PermitRootLogin prohibit-password,PermitRootLogin yes,g' &quot;${ROOT?}/etc/ssh/sshd_config&quot;</span><span class="w">
+
+     </span><span class="no">install -m 644 -o root -g root fstab &quot;${ROOT?}/etc/fstab&quot;</span><span class="w">
+
+     </span><span class="no">install -m 644 -o root -g root eth0 &quot;${ROOT?}/etc/network/interfaces.d/eth0&quot;</span><span class="w">
+
+     </span><span class="no">install -m 755 -o root -g root rpi3-resizerootfs &quot;${ROOT?}/usr/sbin/rpi3-resizerootfs&quot;</span><span class="w">
+     </span><span class="no">install -m 644 -o root -g root rpi3-resizerootfs.service &quot;${ROOT?}/etc/systemd/system&quot;</span><span class="w">
+     </span><span class="no">mkdir -p &quot;${ROOT?}/etc/systemd/system/systemd-remount-fs.service.requires/&quot;</span><span class="w">
+     </span><span class="no">ln -s /etc/systemd/system/rpi3-resizerootfs.service &quot;${ROOT?}/etc/systemd/system/systemd-remount-fs.service.requires/rpi3-resizerootfs.service&quot;</span><span class="w">
+
+     </span><span class="no">install -m 644 -o root -g root rpi3-generate-ssh-host-keys.service &quot;${ROOT?}/etc/systemd/system&quot;</span><span class="w">
+     </span><span class="no">mkdir -p &quot;${ROOT?}/etc/systemd/system/multi-user.target.requires/&quot;</span><span class="w">
+     </span><span class="no">ln -s /etc/systemd/system/rpi3-generate-ssh-host-keys.service &quot;${ROOT?}/etc/systemd/system/multi-user.target.requires/rpi3-generate-ssh-host-keys.service&quot;</span><span class="w">
+     </span><span class="no">rm -f ${ROOT?}/etc/ssh/ssh_host_*_key*</span><span class="w">
+
+  </span><span class="nt">root-fs</span><span class="p">:</span><span class="w"> </span><span class="l-Scalar-Plain">/</span><span class="w">
+
+</span><span class="c1"># Clean up archive cache (likely not useful) and lists (likely outdated) to</span><span class="w">
+</span><span class="c1"># reduce image size by several hundred megabytes.</span><span class="w">
+</span><span class="p-Indicator">-</span><span class="w"> </span><span class="nt">chroot</span><span class="p">:</span><span class="w"> </span><span class="l-Scalar-Plain">/</span><span class="w">
+  </span><span class="nt">shell</span><span class="p">:</span><span class="w"> </span><span class="p-Indicator">|</span><span class="w">
+     </span><span class="no">apt-get clean</span><span class="w">
+     </span><span class="no">rm -rf /var/lib/apt/lists</span><span class="w">
+
+</span><span class="c1"># TODO(https://github.com/larswirzenius/vmdb2/issues/24): remove once vmdb</span><span class="w">
+</span><span class="c1"># clears /etc/resolv.conf on its own.</span><span class="w">
+</span><span class="p-Indicator">-</span><span class="w"> </span><span class="nt">shell</span><span class="p">:</span><span class="w"> </span><span class="p-Indicator">|</span><span class="w">
+     </span><span class="no">rm &quot;${ROOT?}/etc/resolv.conf&quot;</span><span class="w">
+  </span><span class="nt">root-fs</span><span class="p">:</span><span class="w"> </span><span class="l-Scalar-Plain">/</span>
+</pre><p>I could not run with vmdb2 installed from Debian archive, so I cloned raspi3-image-spec and used vmdb2 submodule from it. And here are rest of commands used for testing the script.</p><pre class="code shell literal-block">
+fallocate<span class="w"> </span>-l<span class="w"> </span>4G<span class="w"> </span>rootdisk.img<span class="w">
+</span><span class="c1"># Create one partition with full disk
+</span>sfdisk<span class="w"> </span>-f<span class="w"> </span>rootdisk.img<span class="w"> </span><span class="s">&lt;&lt;EOF
+,+
+EOF</span><span class="w">
+</span>kpartx<span class="w"> </span>-av<span class="w"> </span>rootdisk.img<span class="w"> </span><span class="c1"># mounts on /dev/loop0 for me
+</span>dd<span class="w"> </span><span class="k">if</span><span class="o">=</span>vmdb.img<span class="w"> </span><span class="nv">of</span><span class="o">=</span>/dev/loop0<span class="w">
+</span>sudo<span class="w"> </span>virt-install<span class="w"> </span>--name<span class="w"> </span>experimental<span class="w"> </span>--memory<span class="w"> </span><span class="m">1024</span><span class="w"> </span>--disk<span class="w"> </span><span class="nv">path</span><span class="o">=</span>/dev/loop0<span class="w"> </span>--controller<span class="w"> </span><span class="nv">type</span><span class="o">=</span>scsi,model<span class="o">=</span>virtio-scsi<span class="w"> </span>--boot<span class="w"> </span>hd<span class="w"> </span>--network<span class="w"> </span><span class="nv">bridge</span><span class="o">=</span>lxcbr0
+</pre><p>Once VM booted I could see the root file system is 4G of size instead of 1.5G it was after using dd to write image on to it. So success!.</p></div></div><div id="footer"><p><italic>Tagged as: notetoself, resize2fs, </italic></p></section></div><hr><div id="footer"> Site Proudly powered by <a href="http://getpelican.com/">Pelican</a></div></body></html>

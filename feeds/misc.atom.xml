@@ -1,0 +1,453 @@
+<?xml version="1.0" encoding="utf-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom"><title>Random Ramblings - misc</title><link href="https://copyninja.in/" rel="alternate"/><link href="https://copyninja.in/feeds/misc.atom.xml" rel="self"/><id>https://copyninja.in/</id><updated>2023-06-25T16:13:00+05:30</updated><subtitle>Random thoughts shooting out of volatile mind</subtitle><entry><title>Migrating my domain from copyninja.info to copyninja.in</title><link href="https://copyninja.in/blog/migrating_domain.html" rel="alternate"/><published>2023-06-25T16:13:00+05:30</published><updated>2023-06-25T16:13:00+05:30</updated><author><name>copyninja</name></author><id>tag:copyninja.in,2023-06-25:/blog/migrating_domain.html</id><summary type="html">&lt;p class="first last"&gt;Just an announcment about domain name move&lt;/p&gt;
+</summary><content type="html">&lt;p&gt;After holding the domain &lt;em&gt;copyninja.info&lt;/em&gt; for almost 15 years, I finally let it
+expire and bought a new domain, &lt;em&gt;copyninja.in&lt;/em&gt;. With this move, I also bid
+goodbye to my VPS, which I had been using for over 12 years on DigitalOcean.
+This particular VPS was initially set up with Debian Wheezy (7) and had been
+upgraded over the years to successive Debian versions and finally was running
+Debian Bullseye (11).&lt;/p&gt;
+&lt;p&gt;The main reason for the move was that the &lt;em&gt;.info&lt;/em&gt; domain was becoming more
+expensive every year, and the VPS, which I had upgraded to the $10 USD range,
+cost around $12 USD per month with GST included. Since I wasn't really using the
+VPS anymore and had recently even broken my DNS and mail server settings, I
+decided it was the right time to reduce this additional cost.&lt;/p&gt;
+&lt;p&gt;Now I have a cheaper &lt;em&gt;.in&lt;/em&gt; domain, and the VPS is on a minimal configuration at
+DigitalOcean, costing $5 USD per month (which becomes almost $7 USD with GST).
+Currently, I only run a blog and mail server on this VPS. I will assess if I
+really need to keep running the mail server for some more time. If not, I will
+move the blog to a hosting service like GitHub Pages and completely get rid of
+the VPS.&lt;/p&gt;
+&lt;p&gt;My email address has now changed, and the new mail can be obtained from this
+&lt;cite&gt;link &amp;lt;http://scr.im/newcopyninj&amp;gt;&lt;/cite&gt;. I have updated my GPG key and added the new
+email as the new UID. I still need to revoke the old domain UID. The key has
+already been updated in the Debian Keyring.&lt;/p&gt;
+</content><category term="misc"/><category term="domain"/><category term="move"/><category term="newdomain"/></entry><entry><title>Biboumi - A XMPP - IRC Gateway</title><link href="https://copyninja.in/blog/xmpp-irc-gateway.html" rel="alternate"/><published>2018-03-11T10:49:00+05:30</published><updated>2018-03-11T10:49:00+05:30</updated><author><name>copyninja</name></author><id>tag:copyninja.in,2018-03-11:/blog/xmpp-irc-gateway.html</id><summary type="html">&lt;p class="first last"&gt;A brief post explaining biboumi and its usage.&lt;/p&gt;
+</summary><content type="html">&lt;p&gt;IRC is a communication mode (technically a communication protocol) used by many
+Free Software projects for communication and collaboration. It is serving these
+projects well even 30 years after its inception. Though I'm pretty much okay
+with IRC I had a problem of not able to use IRC from the mobile phones. Main
+problem is the inconsistent network connection, where IRC needs always to be
+connected. This is where I came across &lt;em&gt;Biboumi&lt;/em&gt;.&lt;/p&gt;
+&lt;p&gt;&lt;em&gt;Biboumi&lt;/em&gt; by itself does not have anything to do with mobile phones, its just a
+gateway which will allow you to connect with IRC channel as if it is a XMPP MUC
+room from any XMPP client. Benefit of this is it allows to enjoy some of XMPP
+feature in your IRC channel (not all but those which can be mapped).&lt;/p&gt;
+&lt;p&gt;I run &lt;em&gt;Biboumi&lt;/em&gt; with my &lt;em&gt;ejabbered&lt;/em&gt; instance and there by now I can connect to
+some of the &lt;em&gt;Debian&lt;/em&gt; IRC channel directly from my phone using &lt;em&gt;Conversations&lt;/em&gt;
+XMPP client for Android.&lt;/p&gt;
+&lt;p&gt;&lt;em&gt;Biboumi&lt;/em&gt; is packaged for Debian, though I'm co-maintainer of the package most
+hardwork is done by &lt;em&gt;Jonas Smedegaard&lt;/em&gt; in keeping the package in shape. It is
+also available for &lt;em&gt;stretch-backports&lt;/em&gt; (though slightly outdated as its not
+packaged by us for backports). Once you install the package, copy example
+configuration file from &lt;cite&gt;/usr/share/doc/biboumi/examples/example.conf&lt;/cite&gt; to
+&lt;cite&gt;/etc/biboumi/biboumi.cfg&lt;/cite&gt; and modify the values as needed. Below is my sample
+file with password redacted.&lt;/p&gt;
+&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;&lt;span class="na"&gt;hostname&lt;/span&gt;&lt;span class="o"&gt;=&lt;/span&gt;&lt;span class="s"&gt;biboumi.localhost&lt;/span&gt;
+&lt;span class="na"&gt;password&lt;/span&gt;&lt;span class="o"&gt;=&lt;/span&gt;&lt;span class="s"&gt;xxx&lt;/span&gt;
+&lt;span class="na"&gt;db_name&lt;/span&gt;&lt;span class="o"&gt;=&lt;/span&gt;&lt;span class="s"&gt;/var/lib/biboumi/biboumi.sqlite&lt;/span&gt;
+&lt;span class="c1"&gt;#log_file=/var/log/biboumi/biboumi.log&lt;/span&gt;
+&lt;span class="na"&gt;log_level&lt;/span&gt;&lt;span class="o"&gt;=&lt;/span&gt;&lt;span class="s"&gt;0&lt;/span&gt;
+&lt;span class="na"&gt;admin&lt;/span&gt;&lt;span class="o"&gt;=&lt;/span&gt;&lt;span class="s"&gt;vasudev@copyninja.info&lt;/span&gt;
+&lt;span class="na"&gt;port&lt;/span&gt;&lt;span class="o"&gt;=&lt;/span&gt;&lt;span class="s"&gt;8888&lt;/span&gt;
+&lt;span class="na"&gt;realname_customization&lt;/span&gt;&lt;span class="o"&gt;=&lt;/span&gt;&lt;span class="s"&gt;true&lt;/span&gt;
+&lt;span class="na"&gt;realname_from_jid&lt;/span&gt;&lt;span class="o"&gt;=&lt;/span&gt;&lt;span class="s"&gt;false&lt;/span&gt;
+&lt;/pre&gt;&lt;/div&gt;
+&lt;p&gt;Explanation for all the key, values in the configuration file is available in
+the man page (man biboumi).&lt;/p&gt;
+&lt;p&gt;Biboumi is configured as external component of the XMPP server. In
+my case I'm using ejabberd to host my XMPP service. Below is the configuration
+needed for allowing biboumi to connect with ejabberd.&lt;/p&gt;
+&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="nt"&gt;listen&lt;/span&gt;&lt;span class="p"&gt;:&lt;/span&gt;
+&lt;span class="p p-Indicator"&gt;-&lt;/span&gt;
+&lt;span class="w"&gt;  &lt;/span&gt;&lt;span class="nt"&gt;port&lt;/span&gt;&lt;span class="p"&gt;:&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="l l-Scalar l-Scalar-Plain"&gt;8888&lt;/span&gt;
+&lt;span class="w"&gt;  &lt;/span&gt;&lt;span class="nt"&gt;ip&lt;/span&gt;&lt;span class="p"&gt;:&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="s"&gt;&amp;quot;127.0.0.1&amp;quot;&lt;/span&gt;
+&lt;span class="w"&gt;  &lt;/span&gt;&lt;span class="nt"&gt;module&lt;/span&gt;&lt;span class="p"&gt;:&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="l l-Scalar l-Scalar-Plain"&gt;ejabberd_service&lt;/span&gt;
+&lt;span class="w"&gt;  &lt;/span&gt;&lt;span class="nt"&gt;acess&lt;/span&gt;&lt;span class="p"&gt;:&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="l l-Scalar l-Scalar-Plain"&gt;all&lt;/span&gt;
+&lt;span class="w"&gt;  &lt;/span&gt;&lt;span class="nt"&gt;hosts&lt;/span&gt;&lt;span class="p"&gt;:&lt;/span&gt;
+&lt;span class="w"&gt;    &lt;/span&gt;&lt;span class="s"&gt;&amp;quot;biboumi.localhost&amp;quot;&lt;/span&gt;&lt;span class="p p-Indicator"&gt;:&lt;/span&gt;
+&lt;span class="w"&gt;       &lt;/span&gt;&lt;span class="nt"&gt;password&lt;/span&gt;&lt;span class="p"&gt;:&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="l l-Scalar l-Scalar-Plain"&gt;xxx&lt;/span&gt;
+&lt;/pre&gt;&lt;/div&gt;
+&lt;p&gt;&lt;cite&gt;password&lt;/cite&gt; field in biboumi configuration should match password value in your
+XMPP server configuration.&lt;/p&gt;
+&lt;p&gt;After doing above configuration reload ejabberd (or your XMPP server) and start
+biboumi. Biboumi package provides systemd service file so you might need to
+enable it first. That's it now you have an XMPP to IRC gateway ready.&lt;/p&gt;
+&lt;p&gt;You might notice that I'm using local host name for &lt;em&gt;hostname&lt;/em&gt; key as well as
+&lt;em&gt;ip&lt;/em&gt; field in ejabberd configuration. This is because TLS support was added to
+&lt;em&gt;biboumi&lt;/em&gt; Debian package only after 7.2 release as botan 2.x was not available
+till that point in Debian. Hence using proper domain name and making biboumi
+listen to public will be not safe at least prior to Debian package version
+7.2-2. Also making the biboumi service public means you will also need to handle
+spam bots trying to connect from your service to IRC, which might get your VPS
+banned from IRC.&lt;/p&gt;
+&lt;div class="section" id="connection-semantics"&gt;
+&lt;h2&gt;Connection Semantics&lt;/h2&gt;
+&lt;p&gt;Once biboumi is configured and running you can now use XMPP client of your
+choice (Gajim, Conversation etc.) to connect to IRC. To connect to OFTC from
+your XMPP client you need to following address in &lt;em&gt;Group Chat&lt;/em&gt; section&lt;/p&gt;
+&lt;p&gt;&lt;cite&gt;%irc.oftc.net&amp;#64;biboumi.localhost&lt;/cite&gt;&lt;/p&gt;
+&lt;p&gt;Replace part after &amp;#64; to what you have configured in &lt;em&gt;hostname&lt;/em&gt; field in biboumi
+configuration. To join a specific channel on a IRC server you need to join the
+group conversation with following format&lt;/p&gt;
+&lt;p&gt;&lt;cite&gt;#channel%irc.example.com&amp;#64;biboumi.localhost&lt;/cite&gt;&lt;/p&gt;
+&lt;p&gt;If your nick name is registered and you would want to identify yourself to IRC
+server you can do that by joining in group conversation with NickServ using
+following address&lt;/p&gt;
+&lt;p&gt;&lt;cite&gt;nickserv%irc.example.org&amp;#64;biboumi.localhost&lt;/cite&gt;&lt;/p&gt;
+&lt;p&gt;Once connected you can send NickServ command directly in this virtual channel.
+Like &lt;cite&gt;identify password nick&lt;/cite&gt;. It is also possible to configure your XMPP
+clients like Gajim to send &lt;a class="reference external" href="https://xmpp.org/extensions/xep-0050.html"&gt;Ad-Hoc commands&lt;/a&gt; on connection to particular IRC
+server for identifying your self with IRC servers. But this part I did not get
+working in Gajim.&lt;/p&gt;
+&lt;p&gt;If you are running your own XMPP server then &lt;em&gt;biboumi&lt;/em&gt; gives you best way to
+connect to IRC from your mobile phones. And with applications like
+&lt;em&gt;Conversation&lt;/em&gt; running XMPP application won't be hard on your phone battery.&lt;/p&gt;
+&lt;dl class="docutils"&gt;
+&lt;dt&gt;&lt;strong&gt;Resources&lt;/strong&gt;&lt;/dt&gt;
+&lt;dd&gt;&lt;ul class="first last simple"&gt;
+&lt;li&gt;&lt;a class="reference external" href="https://lab.louiz.org/louiz/biboumi/blob/master/doc/biboumi.1.rst#configuration"&gt;Biboumi documentation&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;&lt;a class="reference external" href="https://conversations.im/"&gt;Conversations&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;&lt;a class="reference external" href="https://docs.ejabberd.im/admin/configuration/"&gt;ejabberd documentation&lt;/a&gt;&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/dd&gt;
+&lt;/dl&gt;
+&lt;/div&gt;
+</content><category term="misc"/><category term="xmpp"/><category term="irc"/><category term="gateway"/><category term="mobile"/></entry><entry><title>Magic: Attach a HTML file to mail and get different on other side</title><link href="https://copyninja.in/blog/fun-with-html-encoding.html" rel="alternate"/><published>2017-05-06T13:19:00+05:30</published><updated>2017-05-06T13:19:00+05:30</updated><author><name>copyninja</name></author><id>tag:copyninja.in,2017-05-06:/blog/fun-with-html-encoding.html</id><summary type="html">&lt;p class="first last"&gt;Magic happens when you attach HTML with certain format in mail and
+find totally different file on other end.&lt;/p&gt;
+</summary><content type="html">&lt;p&gt;It's been a long time I did not write any new blog posts, and finally I got
+something which is interesting enough for a new post and so here it is.&lt;/p&gt;
+&lt;p&gt;I actually wanted some bills from my ISP for some work and I could not find mail
+from the ISP which had bills for some specific months in my mailbox. Problem
+with my ISP is bills are accessible in their account which can be only accessed
+from their own network. They do have a mobile app and that does not seem to work
+especially for the billing section. I used mobile app and selected month for
+which I did not have bill and clicked &lt;em&gt;Send Mail&lt;/em&gt; button. App happily showed
+message saying it sent the bill to my registered mail address but that was a
+fancy lie. After trying several time I gave up and decided I will do it once I
+get back home.&lt;/p&gt;
+&lt;p&gt;Fast forward few hours, I'm back home from office and then I sat in front of my
+laptop and connected to ISP site, promptly downloaded the bills, then used
+&lt;em&gt;notmuch-emacs&lt;/em&gt; and fire up a mail composer, attach those HTML file (yeah they
+produce bill in HTML file :-/) send it to my gmail and forget about it.&lt;/p&gt;
+&lt;p&gt;Fast forward few more days, I just remember I need those bills. I got hold of
+mail I sent earlier in gmail inbox and clicked on attachment and when browser
+opened the attachment I was shocked/surprised . Did you ask why?. See what I saw
+when I opened attachment.&lt;/p&gt;
+&lt;img alt="" src="https://copyninja.in/images/converted_html.png" /&gt;
+&lt;p&gt;Well I was confused for moment on what happened, I tried downloading the file
+and opened it an editor, and I see Chinese characters here also. After reaching
+home I checked the Sent folder in my laptop where I keep copy of mails sent
+using &lt;em&gt;notmuch-emacs&lt;/em&gt;'s &lt;cite&gt;notmuch-fcc-dirs&lt;/cite&gt; variable. I open the file and open
+the attachement and I see same character as I saw in browser!. I open the
+original bills I downloaded and it looks fine. To check if I really attached the
+correct files I again drafted a mail this time to my personal email and sent it.
+Now I open the file from Sent folder and voila again there is different content
+inside my attachment!. Same happens when I receive the mail and open the
+attachment everything inside is Chinese characters!. Totally lost I finally
+opened the original file using &lt;em&gt;emacs&lt;/em&gt;, since I use &lt;em&gt;spacemacs&lt;/em&gt; it asked me for
+downloading of &lt;em&gt;html layer&lt;/em&gt; and after which I was surprised because everything
+inside the editor is in Chinese!. OK finally I've something now so I opened same
+file at same time in &lt;em&gt;nano&lt;/em&gt; from terminal and there it looks fine!. OK that is
+weird again I read carefully content and saw this line in beginning of file&lt;/p&gt;
+&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;&lt;span class="cp"&gt;&amp;lt;?xml version=&amp;quot;1.0&amp;quot; encoding=&amp;quot;UTF-16&amp;quot; ?&amp;gt;&lt;/span&gt;
+&lt;span class="nt"&gt;&amp;lt;html&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="na"&gt;xmlns=&lt;/span&gt;&lt;span class="s"&gt;&amp;quot;http://www.w3.org/1999/xhtml&lt;/span&gt;&lt;span class="nt"&gt;&amp;gt;&lt;/span&gt;....
+&lt;/pre&gt;&lt;/div&gt;
+&lt;p&gt;OK that is new XML tag had encoding declared as &lt;em&gt;UTF-16&lt;/em&gt;, really?. And just for
+checking I changed it to UTF-8 and voila file is back to normal in Emacs
+window!. To confirm this behavior I created a sample file with following content&lt;/p&gt;
+&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;&lt;span class="cp"&gt;&amp;lt;?xml version=&amp;quot;1.0&amp;quot; encoding=&amp;quot;utf-8&amp;quot;?&amp;gt;&lt;/span&gt;&lt;span class="p"&gt;&amp;lt;&lt;/span&gt;&lt;span class="nt"&gt;html&lt;/span&gt; &lt;span class="na"&gt;xmlns&lt;/span&gt;&lt;span class="o"&gt;=&lt;/span&gt;&lt;span class="s"&gt;&amp;quot;http://www.w3.org/1999/xhtml&amp;quot;&lt;/span&gt;&lt;span class="p"&gt;&amp;gt;&amp;lt;&lt;/span&gt;&lt;span class="nt"&gt;head&lt;/span&gt;&lt;span class="p"&gt;&amp;gt;&amp;lt;&lt;/span&gt;&lt;span class="nt"&gt;meta&lt;/span&gt; &lt;span class="na"&gt;http-equiv&lt;/span&gt;&lt;span class="o"&gt;=&lt;/span&gt;&lt;span class="s"&gt;&amp;quot;Content-Type&amp;quot;&lt;/span&gt; &lt;span class="na"&gt;content&lt;/span&gt;&lt;span class="o"&gt;=&lt;/span&gt;&lt;span class="s"&gt;&amp;quot;text/html; charset=iso-8859-1&amp;quot;&lt;/span&gt; &lt;span class="p"&gt;/&amp;gt;&amp;lt;&lt;/span&gt;&lt;span class="nt"&gt;title&lt;/span&gt;&lt;span class="p"&gt;&amp;gt;&lt;/span&gt; Something weird &lt;span class="p"&gt;&amp;lt;/&lt;/span&gt;&lt;span class="nt"&gt;title&lt;/span&gt;&lt;span class="p"&gt;&amp;gt;&amp;lt;&lt;/span&gt;&lt;span class="nt"&gt;body&lt;/span&gt;&lt;span class="p"&gt;&amp;gt;&lt;/span&gt;blablablablablalabkabakba&lt;span class="p"&gt;&amp;lt;/&lt;/span&gt;&lt;span class="nt"&gt;body&lt;/span&gt;&lt;span class="p"&gt;&amp;gt;&amp;lt;/&lt;/span&gt;&lt;span class="nt"&gt;html&lt;/span&gt;&lt;span class="p"&gt;&amp;gt;&lt;/span&gt;
+&lt;/pre&gt;&lt;/div&gt;
+&lt;p&gt;Yeah with long line because ISP had similar case and now I opened the same file
+in nano using terminal and changed &lt;cite&gt;encoding=&amp;quot;UTF-8&amp;quot;&lt;/cite&gt; to &lt;cite&gt;encoding=&amp;quot;UTF-16&amp;quot;&lt;/cite&gt; and
+the behavior repeated I see Chinese character in the emacs buffer which has also
+opened the same file.&lt;/p&gt;
+&lt;p&gt;Below is the small gif showing this happening in real time, see what happens in
+emacs buffer when I change the encoding in terminal below. Fun right?.&lt;/p&gt;
+&lt;img alt="" src="https://copyninja.in/images/html_weirdness.gif" /&gt;
+&lt;p&gt;I made following observation from above experiments.&lt;/p&gt;
+&lt;ol class="arabic simple"&gt;
+&lt;li&gt;When I open original file in browser or my sample file with
+&lt;cite&gt;encoding=&amp;quot;UTF-16&amp;quot;&lt;/cite&gt; its normal, no Chinese characters.&lt;/li&gt;
+&lt;li&gt;When I attach the mail and send it out the attachment some how gets converted
+into HTML file with Chinese characters and viewing source from browser shows
+header containing xml declarations and original &lt;cite&gt;&amp;lt;html&amp;gt;&lt;/cite&gt; declarations get
+ripped off and new tags show up which I've pasted below.&lt;/li&gt;
+&lt;li&gt;If I download the same file and open in editor only Chinese characters are
+present and no HTML tags inside it. So definitely the new tags which I saw by
+viewing source in browser is added by Firefox.&lt;/li&gt;
+&lt;li&gt;I create similar HTML file and change encoding I can see the characters
+changing back and forth in emacs &lt;em&gt;web-mode&lt;/em&gt; when I change encoding of the
+file.&lt;/li&gt;
+&lt;/ol&gt;
+&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;&lt;span class="cp"&gt;&amp;lt;!DOCTYPE HTML PUBLIC &amp;quot;-//W3C//DTD HTML 4.01 Transitional//EN&amp;quot;&amp;gt;&lt;/span&gt;
+&lt;span class="p"&gt;&amp;lt;&lt;/span&gt;&lt;span class="nt"&gt;html&lt;/span&gt;&lt;span class="p"&gt;&amp;gt;&lt;/span&gt;
+  &lt;span class="p"&gt;&amp;lt;&lt;/span&gt;&lt;span class="nt"&gt;head&lt;/span&gt;&lt;span class="p"&gt;&amp;gt;&amp;lt;&lt;/span&gt;&lt;span class="nt"&gt;META&lt;/span&gt; &lt;span class="na"&gt;http-equiv&lt;/span&gt;&lt;span class="o"&gt;=&lt;/span&gt;&lt;span class="s"&gt;&amp;quot;Content-Type&amp;quot;&lt;/span&gt;  &lt;span class="na"&gt;content&lt;/span&gt;&lt;span class="o"&gt;=&lt;/span&gt;&lt;span class="s"&gt;&amp;quot;text/html; charset=utf-8&amp;quot;&lt;/span&gt;&lt;span class="p"&gt;&amp;gt;&lt;/span&gt;
+&lt;/pre&gt;&lt;/div&gt;
+&lt;p&gt;So if I'm understanding this correctly, &lt;em&gt;Emacs&lt;/em&gt; due to encoding declaration
+interprets the actual contents differently. To see how &lt;em&gt;Emacs&lt;/em&gt; really
+interpreted the content I opened the sent mail I had in raw format and saw
+following header lines for attachment.&lt;/p&gt;
+&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;&lt;span class="na"&gt;Content-Type&lt;/span&gt;&lt;span class="o"&gt;:&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="s"&gt;text/html&lt;/span&gt;&lt;span class="c1"&gt;; charset=utf-8&lt;/span&gt;
+&lt;span class="na"&gt;Content-Disposition&lt;/span&gt;&lt;span class="o"&gt;:&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="s"&gt;attachment&lt;/span&gt;&lt;span class="c1"&gt;;&lt;/span&gt;
+&lt;span class="w"&gt;             &lt;/span&gt;&lt;span class="na"&gt;filename&lt;/span&gt;&lt;span class="o"&gt;=&lt;/span&gt;&lt;span class="s"&gt;SOA-102012059675-FEBRUARY-2017.html&lt;/span&gt;
+&lt;span class="na"&gt;Content-Transfer-Encoding&lt;/span&gt;&lt;span class="o"&gt;:&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="s"&gt;base64&lt;/span&gt;
+&lt;/pre&gt;&lt;/div&gt;
+&lt;p&gt;This was followed with base64 encoded data. So does this mean emacs interpreted
+the content as UTF-16 and encoded the content using UTF-8?. Again I've no clue,
+so I changed the &lt;cite&gt;encoding&lt;/cite&gt; in both the files to be as UTF-8 and sent the mail
+by attaching these files again to see what happens. And my guess was right I
+could get the attachment as is on the receiving side. And inspecting raw mail
+the attachment headers now different than before.&lt;/p&gt;
+&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;&lt;span class="na"&gt;Content-Type&lt;/span&gt;&lt;span class="o"&gt;:&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="s"&gt;text/html&lt;/span&gt;
+&lt;span class="na"&gt;Content-Disposition&lt;/span&gt;&lt;span class="o"&gt;:&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="s"&gt;attachment&lt;/span&gt;&lt;span class="c1"&gt;;&lt;/span&gt;
+&lt;span class="w"&gt;             &lt;/span&gt;&lt;span class="na"&gt;filename&lt;/span&gt;&lt;span class="o"&gt;=&lt;/span&gt;&lt;span class="s"&gt;SOA-102012059675-DECEMBER-2016.html&lt;/span&gt;
+&lt;span class="na"&gt;Content-Transfer-Encoding&lt;/span&gt;&lt;span class="o"&gt;:&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="s"&gt;quoted-printable&lt;/span&gt;
+&lt;/pre&gt;&lt;/div&gt;
+&lt;p&gt;See how &lt;em&gt;Content-Type&lt;/em&gt; its different now also see the
+&lt;em&gt;Content-Transfer-Encoding&lt;/em&gt; its now &lt;cite&gt;quoted-printable&lt;/cite&gt; as opposed to &lt;cite&gt;base64&lt;/cite&gt;
+earlier. Additionally I can see HTML content below the header.
+When I opened the attachment from mail I get the actual bill.&lt;/p&gt;
+&lt;p&gt;As far as I understand base64 encoding is used when the data to be attached is
+base64. So I guess basically due to wrong encoding declared inside the file
+&lt;em&gt;Emacs&lt;/em&gt; interpreted the content as a binary data and encoded it differently than
+what it really should be. Phew that was a lot of investigation to understand the
+magic but it was worth it.&lt;/p&gt;
+&lt;p&gt;Do let me know your thoughts on this.&lt;/p&gt;
+</content><category term="misc"/><category term="html"/><category term="encoding"/></entry><entry><title>Stop messing with my settings Network Manager</title><link href="https://copyninja.in/blog/networkmanager-wifi-issue.html" rel="alternate"/><published>2014-07-20T00:39:00+05:30</published><updated>2014-07-20T00:39:00+05:30</updated><author><name>copyninja</name></author><id>tag:copyninja.in,2014-07-20:/blog/networkmanager-wifi-issue.html</id><summary type="html">&lt;p class="first last"&gt;Network Manager toying with wifi card&lt;/p&gt;
+</summary><content type="html">&lt;p&gt;I use a laptop with &lt;cite&gt;Atheros&lt;/cite&gt; wifi card with &lt;cite&gt;ath9k&lt;/cite&gt; driver. I use
+&lt;cite&gt;hostapd&lt;/cite&gt; to convert my laptop wifi into AP (Access point) so I can
+share network with my &lt;cite&gt;Nexus 7&lt;/cite&gt; and &lt;cite&gt;Kindle&lt;/cite&gt;. This has been working
+fine for quite some time till my recent update.&lt;/p&gt;
+&lt;p&gt;After recent system update (I use Debian Sid), I couldn't for some
+reason convert my wifi into AP so my device can connect. I can't find
+anything in log nor in hostapd debug messages which is useful to
+trouble shoot the issue. Every time I start the laptop my wifi card
+will be blocked by RF-KILL and I have manually unblock (both hard and
+soft). The script which I use to convert my Wifi into AP is below&lt;/p&gt;
+&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;#Initial wifi interface configuration
+ifconfig &amp;quot;$1&amp;quot; up 192.168.2.1 netmask 255.255.255.0
+sleep 2
+
+# start dhcp
+sudo systemctl restart dnsmasq.service
+
+iptables --flush
+iptables --table nat --flush
+iptables --delete-chain
+iptables -t nat -A POSTROUTING -o &amp;quot;$2&amp;quot; -j MASQUERADE
+iptables -A FORWARD -i &amp;quot;$1&amp;quot; -j ACCEPT
+
+sysctl -w net.ipv4.ip_forward=1
+
+#start hostapd
+hostapd /etc/hostapd/hostapd.conf  &amp;amp;&amp;gt; /dev/null &amp;amp;
+&lt;/pre&gt;&lt;/div&gt;
+&lt;p&gt;I tried rebooting the laptop and for some time I managed to convert my
+wifi into AP, I noticed at same time that Network Manager is not
+started once laptop is booted, yeah this also started happening after
+recent upgrade which I guess is the black magic of systemd. After some
+time I noticed wifi has went down and now I can't bring it up because
+its blocked by RF-KILL. After checking the syslog I noticed following
+lines.&lt;/p&gt;
+&lt;pre class="literal-block"&gt;
+Jul 18 23:09:30 rudra kernel: [ 1754.891060] IPv6: ADDRCONF(NETDEV_CHANGE): wlan0: link becomes ready
+Jul 18 23:09:30 rudra NetworkManager[5485]: &amp;lt;info&amp;gt; (mon.wlan0): using nl80211 for WiFi device control
+Jul 18 23:09:30 rudra NetworkManager[5485]: &amp;lt;info&amp;gt; (mon.wlan0): driver supports Access Point (AP) mode
+Jul 18 23:09:30 rudra NetworkManager[5485]: &amp;lt;info&amp;gt; (mon.wlan0): new 802.11 WiFi device (driver: 'ath9k' ifindex: 10)
+Jul 18 23:09:30 rudra NetworkManager[5485]: &amp;lt;info&amp;gt; (mon.wlan0): exported as /org/freedesktop/NetworkManager/Devices/8
+Jul 18 23:09:30 rudra NetworkManager[5485]: &amp;lt;info&amp;gt; (mon.wlan0): device state change: unmanaged -&amp;gt; unavailable (reason 'managed') [10 20 2]
+Jul 18 23:09:30 rudra NetworkManager[5485]: &amp;lt;info&amp;gt; (mon.wlan0): preparing device
+Jul 18 23:09:30 rudra NetworkManager[5485]: &amp;lt;info&amp;gt; devices added (path: /sys/devices/pci0000:00/0000:00:1c.1/0000:04:00.0/net/mon.wlan0, iface: mon.wlan0)
+Jul 18 23:09:30 rudra NetworkManager[5485]: &amp;lt;info&amp;gt; device added (path: /sys/devices/pci0000:00/0000:00:1c.1/0000:04:00.0/net/mon.wlan0, iface: mon.wlan0): no ifupdown configuration found.
+Jul 18 23:09:33 rudra ModemManager[891]: &amp;lt;warn&amp;gt;  Couldn't find support for device at '/sys/devices/pci0000:00/0000:00:1c.1/0000:04:00.0': not supported by any plugin
+&lt;/pre&gt;
+&lt;p&gt;Well I couldn't figure out much but it looks like NetworkManager has
+come up and after seeing interface &lt;cite&gt;mon.wlan0&lt;/cite&gt;, a monitoring interface
+created by &lt;cite&gt;hostapd&lt;/cite&gt; to monitor the AP goes mad and tries to do
+something with it. I've no clue what it is doing and don't have enough
+patience to debug that. Probably some expert can give me hints on
+this.&lt;/p&gt;
+&lt;p&gt;So as a last resort I purged the NetworkManager completely from the
+system and settled back to good old &lt;cite&gt;wicd&lt;/cite&gt; and rebooted the
+system. After reboot wifi card is happy and is not blocked by RF-KILL
+and now I can convert it AP and use it as long as I wish without any
+problems. Wicd is not a great tool but its good enough to get the job
+done and does only what is asked to it unlike the NetworkManager.&lt;/p&gt;
+&lt;p&gt;So in short&lt;/p&gt;
+&lt;blockquote&gt;
+NetworkManager please stop f***ing with my settings and stop acting
+oversmart.&lt;/blockquote&gt;
+</content><category term="misc"/><category term="network-manager"/><category term="ath9k"/><category term="wifi"/></entry><entry><title>Kontalk FLOSS alternative for Whatsapp and Co.</title><link href="https://copyninja.in/blog/kontalk-messaging.html" rel="alternate"/><published>2014-02-21T19:51:00+05:30</published><updated>2014-02-21T19:51:00+05:30</updated><author><name>copyninja</name></author><id>tag:copyninja.in,2014-02-21:/blog/kontalk-messaging.html</id><summary type="html">&lt;p class="first last"&gt;FLOSS alternative for Whatsapp.&lt;/p&gt;
+</summary><content type="html">&lt;p&gt;So &lt;em&gt;Whatsapp&lt;/em&gt; has been acquired by Facebook and this news is still hot
+and people are discussing it all over the twitterverse. So I took this
+opportunity to stop using &lt;em&gt;Whatsapp&lt;/em&gt; and removed it from my
+phone. Possibly I could have deleted my account but who cares.&lt;/p&gt;
+&lt;p&gt;Anyway I've been searching for a secure and FLOSS alternative for
+&lt;em&gt;Whatsapp&lt;/em&gt; for quite some time now, few days ago I found about
+&lt;em&gt;Telegram&lt;/em&gt; but after reading &lt;a class="reference external" href="http://blog.tincho.org/posts/Telegram/"&gt;post&lt;/a&gt; by Tincho on planet Debian,
+I decided not to use it.  Recently while going through the talk list
+for fossmeet.in I found link for &lt;a class="reference external" href="http://kontalk.org"&gt;Kontalk&lt;/a&gt; in a
+privacy awareness talk &lt;a class="reference external" href="http://funnel.fossmeet.in/2014/61-i-have-nothing-to-hide-i-dont-care-about-privacy"&gt;proposal&lt;/a&gt;
+by &lt;a class="reference external" href="http://qa.debian.org/developer.php?login=praveen"&gt;Praveen&lt;/a&gt; and
+thought I should give it a try.  So below is my first feelings about
+&lt;em&gt;Kontalk&lt;/em&gt;.&lt;/p&gt;
+&lt;div class="section" id="installation-and-activation"&gt;
+&lt;h2&gt;Installation and Activation&lt;/h2&gt;
+&lt;p&gt;Kontalk can be installed from &lt;a class="reference external" href="https://play.google.com/store/apps/details?id=org.kontalk"&gt;playstore&lt;/a&gt; for
+verification purpose it requests your phone number and country code
+and request for verification. This should send a SMS with a code which
+should be entered in the text box given and app is ready to use. There
+is also a possibility to use pre-existing verification code (if you
+got one from developer directly, read below for details).&lt;/p&gt;
+&lt;p&gt;I did see some glitches like I never got the SMS delivered to my phone
+after 2 attempts and a days wait. Then I went ahead and reported a
+&lt;a class="reference external" href="https://code.google.com/p/kontalk/issues/detail?id=179"&gt;bug&lt;/a&gt; and
+the main developer was quick to respond. After a discussion it was
+noticed that SMS was blocked by spam filters. He also mentioned its
+tough to get SMS delivered to India. He was kind enough to provide me
+with a verification code and I used the &lt;em&gt;Use existing code&lt;/em&gt; option to
+enter it and get &lt;em&gt;Kontalk&lt;/em&gt; activated.&lt;/p&gt;
+&lt;p&gt;The SMS delivery inconsistency is still present for India (and may be
+other nations too) some people get code immidiately others may be
+after couple of days and some might not. Upstream is already working
+on a possible &lt;a class="reference external" href="https://code.google.com/p/kontalk/issues/detail?id=141"&gt;workaround&lt;/a&gt;.&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class="section" id="user-experience"&gt;
+&lt;h2&gt;User Experience&lt;/h2&gt;
+&lt;p&gt;Now coming to usage part, the UI is neat and clean, I won't say super
+polished as &lt;em&gt;Whatsapp&lt;/em&gt; or other popular apps but its really &lt;em&gt;neat&lt;/em&gt; and
+easy to use. Some points which I like are&lt;/p&gt;
+&lt;ul class="simple"&gt;
+&lt;li&gt;Ability to hide presence, so others won't know you are online or
+offline. (unlike &lt;em&gt;Whatsapp&lt;/em&gt; which advertises last seen)&lt;/li&gt;
+&lt;li&gt;Encrypted messages and ability to optin or optout.&lt;/li&gt;
+&lt;li&gt;Encrypted status messages! Only user with your phone number can see
+your status. (Cool isn't it).&lt;/li&gt;
+&lt;li&gt;Manually requesting to find contacts who already uses
+kontalk!. Right it doesn't read your contact list without your
+permission you need to refresh to check who in your contacts is
+using Kontalk.&lt;/li&gt;
+&lt;li&gt;Attach and smiley options in the top right corner of Chat window
+which allows easy accessing unlike keyboard - smiley switching of
+&lt;em&gt;Whatsapp&lt;/em&gt;.&lt;/li&gt;
+&lt;li&gt;No automatic download of media contents which is shared. Yes by
+default it doesn't download any picture or video automatically if
+you want to see something click on it and select download.&lt;/li&gt;
+&lt;li&gt;Running your own server for Kontalk! Now thats something which is
+interesting for people who doesn't want to host their data on some
+other peoples infrastructure. Code for server is available at
+&lt;a class="reference external" href="https://code.google.com/p/kontalk/source/browse?repo=xmppserver"&gt;xmppserver&lt;/a&gt;
+repo.&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;But there are some rough edges also but I'm sure this can be
+improved. But some points which I noticed are&lt;/p&gt;
+&lt;ul class="simple"&gt;
+&lt;li&gt;Contact name disappears and only number is displayed. This is
+something which happened with one of my contact so I'm not really
+sure its a bug.&lt;/li&gt;
+&lt;li&gt;My friend noticed all his existing contacts suddenly vanished when
+he refreshed contacts list. Again this is possible bugs and we are
+considering reporting it upstream.&lt;/li&gt;
+&lt;li&gt;No group chats yet. I don't see a option to do that yet.&lt;/li&gt;
+&lt;li&gt;Attachment at the moment is restricted only to pictures (and video?
+never tried) and uploading takes quite sometime and sometime hangs
+forever.&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;So I'm considering forwarding these to upstream and help them by
+providing enough data so these can be fixed.&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class="section" id="technical-side"&gt;
+&lt;h2&gt;Technical Side&lt;/h2&gt;
+&lt;p&gt;All code for client server and protocol specs are available under
+GPL-v3 at the &lt;a class="reference external" href="https://code.google.com/p/kontalk"&gt;Kontalk project&lt;/a&gt;
+site. Server software is written in Python and I guess uses XMPP (but
+I've not cross verified). Server also uses MySQL as database. These
+can be hosted on our own servers but possibly needs more than that
+like SMS sending options etc.&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class="section" id="conclusion"&gt;
+&lt;h2&gt;Conclusion&lt;/h2&gt;
+&lt;p&gt;In my views &lt;em&gt;Kontalk&lt;/em&gt; can become a great alternative for &lt;em&gt;Whatsapp&lt;/em&gt;
+and co from Free Software world and I encourage every one to give it a
+try which will be the first step to help improving it.&lt;/p&gt;
+&lt;blockquote&gt;
+Disclaimer: I'm not a privacy or security expert so whatever I shared
+above are what I noticed and experts may see something different than
+this. In any case I welcome comments and suggestions.&lt;/blockquote&gt;
+&lt;/div&gt;
+</content><category term="misc"/><category term="smartphone"/><category term="messaging"/><category term="whatsapp"/><category term="foss"/></entry><entry><title>Friendica instance on my VPS is down</title><link href="https://copyninja.in/blog/friendica-instance-down.html" rel="alternate"/><published>2014-02-08T20:31:00+05:30</published><updated>2014-02-08T20:31:00+05:30</updated><author><name>copyninja</name></author><id>tag:copyninja.in,2014-02-08:/blog/friendica-instance-down.html</id><summary type="html">&lt;p class="first last"&gt;Friendica instance on my vps went down.&lt;/p&gt;
+</summary><content type="html">&lt;p&gt;I started running &lt;a class="reference external" href="http://friendica.com"&gt;Friendica&lt;/a&gt; instance on my
+VPS. With help of &lt;a class="reference external" href="http://dr.jones.dk"&gt;Jonas Smedegaard&lt;/a&gt; I managed
+to run Friendica in a uWSGI container. The site was running at
+&lt;em&gt;samsargika.copyninja.info&lt;/em&gt; and is no longer accessible.&lt;/p&gt;
+&lt;p&gt;Since VPS itself was running Debian Wheezy I couldn't run uWSGI with
+PHP support on it. &lt;em&gt;(support for PHP in uWSGI landed after
+Wheezy)&lt;/em&gt;. But Jonas was kind enough for me to provide a backported
+version.&lt;/p&gt;
+&lt;p&gt;Recently Wheezy got a security update for PHP and thats where all the
+problem started. The backported &lt;em&gt;uwsgi-plugin-php&lt;/em&gt; was not recompiled
+to use security updated PHP and I couldn't upgrade the things. After
+few days I noticed first freeze on my VPS and I had to reboot the VPS
+to get it online again. The fact I noticed was uWSGI being killed due
+to a OOM in syslog but I didn't explore much and consulted Jonas to
+get a updated uWSGI. But that didn't happen as Jonas himself is facing
+some problem with uWSGI builds. While again checking with aptitude for
+upgrade I accidentally confirmed removal of &lt;em&gt;uwsgi-plugin-php&lt;/em&gt; for
+getting security updates :-/. But nothing happened to my running
+service as upgrade of libs in Debian doesn't cause the restart of all
+services which are using that lib &lt;em&gt;(desired effect is restart of
+service but I don't know the side affects involved)&lt;/em&gt;.&lt;/p&gt;
+&lt;p&gt;Second freeze happened yesterday and on the reboot &lt;em&gt;uwsgi-plugin-php&lt;/em&gt;
+was missing there by taking my Friendica instance down. More closer
+investigation showed the same OOM but this time I noticed each OOM
+occurred just after cronjob was running &lt;em&gt;poller.php&lt;/em&gt; a script which is
+actually causing all federation in Friendica. So it was clear there is
+something wrong either in &lt;em&gt;poller.php&lt;/em&gt; or in my setup which was making
+it eat memory and freeze my VPS.&lt;/p&gt;
+&lt;p&gt;But I also found some stupidity I did during configuration which Jonas
+also pointed me out.&lt;/p&gt;
+&lt;ol class="arabic simple"&gt;
+&lt;li&gt;&lt;em&gt;Installing cronjob inside crontab rather than cron.d&lt;/em&gt;&lt;/li&gt;
+&lt;li&gt;&lt;em&gt;Installing poller.php crontab for root user :-/&lt;/em&gt;&lt;/li&gt;
+&lt;/ol&gt;
+&lt;p&gt;I basically violated the basic rule by running a unsafe script as root
+user, good that script didn't do some crazy stuff. So even though my
+instance went down I learnt my lessons&lt;/p&gt;
+&lt;ol class="arabic simple"&gt;
+&lt;li&gt;&lt;em&gt;Don't ever ever ever run a unsafe script as root that too through cron&lt;/em&gt;&lt;/li&gt;
+&lt;li&gt;&lt;em&gt;Sandbox the unsafe script so it can be killed on time rather than
+it taking the whole system down.&lt;/em&gt;&lt;/li&gt;
+&lt;li&gt;&lt;em&gt;PHP is not really secure, if it was secure there wouldn't be
+security updates and atleast my site would be still running :-D&lt;/em&gt;&lt;/li&gt;
+&lt;/ol&gt;
+&lt;p&gt;So I now need to wait till Jonas get me new shiny backported uWSGI
+linked against new PHP on Wheezy and till that time I need to explore
+on how I can sandbox the poller.php script.&lt;/p&gt;
+</content><category term="misc"/><category term="friendica"/><category term="sysadmin"/><category term="php"/><category term="debian"/><category term="sandboxing"/></entry><entry><title>Moving weblog from Jekyll to Pelican</title><link href="https://copyninja.in/blog/blog-move.html" rel="alternate"/><published>2014-02-02T08:55:00+05:30</published><updated>2014-02-02T08:55:00+05:30</updated><author><name>copyninja</name></author><id>tag:copyninja.in,2014-02-02:/blog/blog-move.html</id><summary type="html">&lt;p class="first last"&gt;Re-creating blog using Pelican&lt;/p&gt;
+</summary><content type="html">&lt;p&gt;Its been a while and I was not actively blogging. I wanted to start
+blogging again but I was for some reason not happy with &lt;em&gt;Jekyll&lt;/em&gt;
+static site generator which was powering my previous site. So I took
+this chance to explore other static site generators and redesign my
+blog.&lt;/p&gt;
+&lt;p&gt;I explored a bit of Pelican, Nikola and Frog. I didn't feel
+comfortable with &lt;em&gt;Nikola&lt;/em&gt;. &lt;em&gt;Frog&lt;/em&gt; is a static site generator written
+using &lt;a class="reference external" href="http://racket-lang.org/"&gt;*Racket*&lt;/a&gt; and since I'm learning
+Scheme using racket I was leaning towards using it but at the last
+moment I decided to settle with &lt;em&gt;Pelican&lt;/em&gt;. The main reason for not
+using &lt;em&gt;Frog&lt;/em&gt; was that I just wanted to get my site up rather than
+waiting for me to complete learning racket and use Frog.&lt;/p&gt;
+&lt;p&gt;My feeling about Pelican is that its a nice tool and is simple and
+gives all basic things like generating RSS/ATOM feeds and nice theming
+support. In case of Jekyll I had to write custom page for creating RSS
+feed and had pain in creating my first theme (yeah I'm not a
+designer). But now things might have changed in Jekyll land but anyway
+I don't care anymore.&lt;/p&gt;
+&lt;p&gt;New design uses &lt;a class="reference external" href="https://github.com/DandyDev/pelican-bootstrap3"&gt;pelican-bootstrap3&lt;/a&gt; theme and there is
+no comment facility available. If you want to comment or suggesting
+things on my post consider writing mail to me :-).&lt;/p&gt;
+&lt;p&gt;So what happened to older entries? Moving the old entries from Jekyll
+format to Pelican was real PITA so I just renamed my old site to
+&lt;a class="reference external" href="http://blog-archive.copyninja.info"&gt;blog-archive&lt;/a&gt;. So this is a
+from scratch site and will contain only new entries. So how do you
+like my new blog design? :-)&lt;/p&gt;
+</content><category term="misc"/><category term="jekyll"/><category term="pelican"/><category term="blog"/></entry></feed>
