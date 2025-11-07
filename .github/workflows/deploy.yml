@@ -47,13 +47,11 @@ jobs:
 
       - name: Update Theme Path
         run: |
-          cd site
           sed -i 's|THEME = os\.path\.join.*|THEME = "./pelican-simple"|' pelicanconf.py
           sed -i 's|PLUGIN_PATHS = .*|PLUGIN_PATHS = ["./pelican-plugins"]|' pelicaconf.py
 
       - name: Build site
         run: |
-          cd site
           make publish
           echo "copyninja.in" > output/CNAME
 
