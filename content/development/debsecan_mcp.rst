@@ -3,9 +3,8 @@ Learning Notes: Debsecan MCP Server
 
 :date: 2026-02-21 17:13 +0530
 :slug: debsecan-mcp
-:tags: generative_ai, debsecan, mcp, llm
+:tags: generative_ai, debsecan, mcp, llm, debian
 :author: copyninja
-:status: draft
 :summary: This post describes a new learning project: an MCP server inspired by
           debsecan.
 
