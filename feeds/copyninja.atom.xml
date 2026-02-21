@@ -1,5 +1,199 @@
 <?xml version="1.0" encoding="utf-8"?>
-<feed xmlns="http://www.w3.org/2005/Atom"><title>Random Ramblings - copyninja</title><link href="https://copyninja.in/" rel="alternate"/><link href="https://copyninja.in/feeds/copyninja.atom.xml" rel="self"/><id>https://copyninja.in/</id><updated>2025-11-16T10:32:00+05:30</updated><subtitle>Random thoughts shooting out of volatile mind</subtitle><entry><title>Moving blog from self hosting to Github Pages</title><link href="https://copyninja.in/blog/move-back-to-github.html" rel="alternate"/><published>2025-11-16T10:32:00+05:30</published><updated>2025-11-16T10:32:00+05:30</updated><author><name>copyninja</name></author><id>tag:copyninja.in,2025-11-16:/blog/move-back-to-github.html</id><summary type="html">&lt;p class="first last"&gt;Moving the blog to Github pages&lt;/p&gt;
+<feed xmlns="http://www.w3.org/2005/Atom"><title>Random Ramblings - copyninja</title><link href="https://copyninja.in/" rel="alternate"/><link href="https://copyninja.in/feeds/copyninja.atom.xml" rel="self"/><id>https://copyninja.in/</id><updated>2026-02-21T17:13:00+05:30</updated><subtitle>Random thoughts shooting out of volatile mind</subtitle><entry><title>Learning Notes: Debsecan MCP Server</title><link href="https://copyninja.in/blog/debsecan-mcp.html" rel="alternate"/><published>2026-02-21T17:13:00+05:30</published><updated>2026-02-21T17:13:00+05:30</updated><author><name>copyninja</name></author><id>tag:copyninja.in,2026-02-21:/blog/debsecan-mcp.html</id><summary type="html">&lt;p class="first last"&gt;This post describes a new learning project: an MCP server inspired by
+debsecan.&lt;/p&gt;
+</summary><content type="html">&lt;p&gt;Since Generative AI is currently the most popular topic, I wanted to get my
+hands dirty and learn something new. I was learning about the Model Context
+Protocol at the time and wanted to apply it to build something simple.&lt;/p&gt;
+&lt;div class="section" id="idea"&gt;
+&lt;h2&gt;Idea&lt;/h2&gt;
+&lt;p&gt;On Debian systems, we use &lt;cite&gt;debsecan&lt;/cite&gt; to find vulnerabilities. However, the tool
+currently provides a simple list of vulnerabilities and packages with no
+indication of the system's security posture—meaning no criticality information
+is exposed and no executive summary is provided regarding what needs to be
+fixed. Of course, one can simply run the following to install existing fixes and
+be done with it:&lt;/p&gt;
+&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;apt-get&lt;span class="w"&gt; &lt;/span&gt;install&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="k"&gt;$(&lt;/span&gt;debsecan&lt;span class="w"&gt; &lt;/span&gt;--suite&lt;span class="w"&gt; &lt;/span&gt;sid&lt;span class="w"&gt; &lt;/span&gt;--format&lt;span class="w"&gt; &lt;/span&gt;packages&lt;span class="w"&gt; &lt;/span&gt;--only-fixed&lt;span class="k"&gt;)&lt;/span&gt;
+&lt;/pre&gt;&lt;/div&gt;
+&lt;p&gt;But this is not how things work in corporate environments; you need to provide a
+report showing the system's previous state and the actions taken to bring it to
+a safe state. It is all about metrics and reports.&lt;/p&gt;
+&lt;p&gt;My goal was to use &lt;cite&gt;debsecan&lt;/cite&gt; to generate a list of vulnerabilities, find more
+detailed information on them, and prioritize them as critical, high, medium, or
+low. By providing this information to an AI, I could ask it to generate an
+executive summary report detailing what needs to be addressed immediately and
+the overall security posture of the system.&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class="section" id="initial-take"&gt;
+&lt;h2&gt;Initial Take&lt;/h2&gt;
+&lt;p&gt;My initial thought was to use an existing LLM, either self-hosted or a
+cloud-based LLM like Gemini (which provides an API with generous limits via AI
+Studio). I designed functions to output the list of vulnerabilities on the
+system and provide detailed information on each. The idea was to use these as
+&amp;quot;tools&amp;quot; for the LLM.&lt;/p&gt;
+&lt;div class="section" id="learnings"&gt;
+&lt;h3&gt;Learnings&lt;/h3&gt;
+&lt;ol class="arabic simple"&gt;
+&lt;li&gt;I learned about open-source LLMs using Ollama, which allows you to download
+and use models on your laptop.&lt;/li&gt;
+&lt;li&gt;I used Llama 3.1, Llama 3.2, and Granite 4 on my laptop without a GPU. I
+managed to run my experiments, even though they were time-consuming and
+occasionally caused my laptop to crash.&lt;/li&gt;
+&lt;li&gt;I learned about Pydantic and how to use it to parse custom JSON schemas with
+minimal effort.&lt;/li&gt;
+&lt;li&gt;I learned about osv.dev, an open-source initiative by Google that aggregates
+vulnerability information from various sources and provides data in a
+well-documented JSON schema format.&lt;/li&gt;
+&lt;li&gt;I learned about the EPSS (Exploit Prediction Scoring System) and how it is
+used alongside static CVSS scoring to detect truly critical vulnerabilities.
+The EPSS score provides an idea of the probability of a vulnerability being
+exploited in the wild based on actual real-world attacks.&lt;/li&gt;
+&lt;/ol&gt;
+&lt;p&gt;These experiments led to a collection of &lt;a class="reference external" href="https://github.com/copyninja/notebooks/tree/main/langchain"&gt;notebooks&lt;/a&gt;. One key takeaway
+was that when defining tools, I cannot simply output massive amounts of text
+because it consumes tokens and increases costs for paid models (though it is
+fine for local models using your own hardware and energy). Self-hosted models
+require significant prompting to produce proper output, which helped me
+understand the real-world application of prompt engineering.&lt;/p&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;div class="section" id="change-of-plans"&gt;
+&lt;h2&gt;Change of Plans&lt;/h2&gt;
+&lt;p&gt;Despite extensive experimentation, I felt I was nowhere close to a full
+implementation. While using a Gemini learning tool to study MCP, it suddenly
+occurred to me: why not write the entire thing as an MCP server? This would save
+me from implementing the agent side and allow me to hook it into any
+IDE-based LLM.&lt;/p&gt;
+&lt;div class="section" id="design"&gt;
+&lt;h3&gt;Design&lt;/h3&gt;
+&lt;p&gt;This MCP server is primarily a mix of a &amp;quot;tool&amp;quot; (which executes on the server
+machine to identify installed packages and their vulnerabilities) and a
+&amp;quot;resource&amp;quot; (which exposes read-only information for a specific CVE ID).&lt;/p&gt;
+&lt;p&gt;The MCP exposes two tools:&lt;/p&gt;
+&lt;ol class="arabic simple"&gt;
+&lt;li&gt;List Vulnerabilities: This tool identifies vulnerabilities in the packages
+installed on the system, categorizes them using CVE and EPSS scores, and
+provides a dictionary of critical, high, medium, and low vulnerabilities.&lt;/li&gt;
+&lt;li&gt;Research Vulnerabilities: Based on the user prompt, the LLM can identify
+relevant vulnerabilities and pass them to this function to retrieve details
+such as whether a fix is available, the fixed version, and criticality.&lt;/li&gt;
+&lt;/ol&gt;
+&lt;/div&gt;
+&lt;div class="section" id="vibe-coding"&gt;
+&lt;h3&gt;Vibe Coding&lt;/h3&gt;
+&lt;p&gt;&amp;quot;Vibe coding&amp;quot; is the latest trend, with many claiming that software engineering
+jobs are a thing of the past. Without going into too much detail, I decided to
+give it a try. While this is not my first &amp;quot;vibe coded&amp;quot; project (I have done this
+previously at work using corporate tools), it is my first attempt to vibe code a
+hobby/learning project.&lt;/p&gt;
+&lt;p&gt;I chose Antigravity because it seemed to be the only editor providing a
+sufficient amount of free tokens. For every vibe coding project, I spend time
+thinking about the barebones skeleton: the modules, function return values, and
+data structures. This allows me to maintain control over the LLM-generated code
+so it doesn't become overly complicated or incomprehensible.&lt;/p&gt;
+&lt;p&gt;As a first step, I wrote down my initial design in a requirements document. In
+that document, I explicitly called for using &lt;a class="reference external" href="https://github.com/copyninja/debsecan-mcp/blob/main/docs/requirement.md"&gt;debsecan&lt;/a&gt; as
+the model for various components. Additionally, I asked the AI to reference my
+specific &lt;a class="reference external" href="https://github.com/copyninja/notebooks/blob/main/langchain/secscan-common.ipynb"&gt;code for the EPSS logic&lt;/a&gt;.
+The reasons were:&lt;/p&gt;
+&lt;ol class="arabic simple"&gt;
+&lt;li&gt;&lt;cite&gt;debsecan&lt;/cite&gt; already solves the core problem; I am simply rebuilding it.
+&lt;cite&gt;debsecan&lt;/cite&gt; uses a single file generated by the Debian Security team
+containing all necessary information, which prevents us from needing multiple
+external sources.&lt;/li&gt;
+&lt;li&gt;This provides the flexibility to categorize vulnerabilities within the
+listing tool itself since all required information is readily available,
+unlike my original notebook-based design.&lt;/li&gt;
+&lt;/ol&gt;
+&lt;p&gt;I initially used Gemini 3 Flash as the model because I was concerned about
+exceeding my free limits.&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class="section" id="hiccups"&gt;
+&lt;h3&gt;Hiccups&lt;/h3&gt;
+&lt;p&gt;Although it initially seemed successful, I soon noticed discrepancies between
+the local &lt;cite&gt;debsecan&lt;/cite&gt; outputs and the outputs generated by the tools. I asked the
+AI to fix this, but after two attempts, it still could not match the outputs. I
+realized it was writing its own version-comparison logic and failing
+significantly.&lt;/p&gt;
+&lt;p&gt;Finally, I instructed it to depend entirely on the &lt;em&gt;python-apt&lt;/em&gt; module for
+version comparison; since it is not on PyPI, I asked it to pull directly from
+the Git source. This solved some issues, but the problem persisted. By then, my
+weekly quota was exhausted, and I stopped debugging.&lt;/p&gt;
+&lt;p&gt;A week later, I resumed debugging with the Claude 3.5 Sonnet model. Within 20-25
+minutes, it found the fix, which involved &lt;a class="reference external" href="https://github.com/copyninja/debsecan-mcp/commit/4fdf5a2ab139f3c0c335d24973892ddfaf2b08e0#diff-9d3ed702945a5c91f0ed3e54404324fecfca1fbd7ae5fb44508081c6040e9276"&gt;four lines of changes&lt;/a&gt;
+in the parsing logic. However, I ran out of limits again before I could proceed
+further.&lt;/p&gt;
+&lt;p&gt;In the requirements, I specified that the &lt;em&gt;list vulnerabilities&lt;/em&gt; tool should
+only provide a dictionary of CVE IDs divided by severity. However, the AI
+instead provided full text for all vulnerability details, resulting in excessive
+data—including negligible vulnerabilities—being sent to the LLM. Consequently,
+it never called the &lt;em&gt;research vulnerabilities&lt;/em&gt; tool. Since I had run out of
+limits, I manually fixed this in a &lt;a class="reference external" href="https://github.com/copyninja/debsecan-mcp/commit/32f291d5ec4966b1349d39cfcb5d154e64ad844d"&gt;follow-up commit&lt;/a&gt;.&lt;/p&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;div class="section" id="how-to-use"&gt;
+&lt;h2&gt;How to Use&lt;/h2&gt;
+&lt;p&gt;I have published the current work in the &lt;a class="reference external" href="https://github.com/copyninja/debsecan-mcp"&gt;debsecan-mcp&lt;/a&gt; repository. I have used the same
+license as the original &lt;em&gt;debsecan&lt;/em&gt;. I am not entirely sure how to interpret
+licenses for vibe-coded projects, but here we are.&lt;/p&gt;
+&lt;p&gt;To use this, you need to install the tool in a virtual environment and configure
+your IDE to use the MCP. Here is how I set it up for Visual Studio Code:&lt;/p&gt;
+&lt;ol class="arabic simple"&gt;
+&lt;li&gt;Follow the &lt;a class="reference external" href="https://code.visualstudio.com/docs/copilot/customization/mcp-servers#_add-an-mcp-server"&gt;guide from the VS Code documentation&lt;/a&gt;
+regarding adding an MCP server.&lt;/li&gt;
+&lt;li&gt;My global &lt;cite&gt;mcp.json&lt;/cite&gt; looks like this:&lt;/li&gt;
+&lt;/ol&gt;
+&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;&lt;span class="p"&gt;{&lt;/span&gt;
+&lt;span class="w"&gt;  &lt;/span&gt;&lt;span class="nt"&gt;&amp;quot;servers&amp;quot;&lt;/span&gt;&lt;span class="p"&gt;:&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="p"&gt;{&lt;/span&gt;
+&lt;span class="w"&gt;      &lt;/span&gt;&lt;span class="nt"&gt;&amp;quot;debsecan-mcp&amp;quot;&lt;/span&gt;&lt;span class="p"&gt;:&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="p"&gt;{&lt;/span&gt;
+&lt;span class="w"&gt;          &lt;/span&gt;&lt;span class="nt"&gt;&amp;quot;command&amp;quot;&lt;/span&gt;&lt;span class="p"&gt;:&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="s2"&gt;&amp;quot;uv&amp;quot;&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt;
+&lt;span class="w"&gt;              &lt;/span&gt;&lt;span class="nt"&gt;&amp;quot;args&amp;quot;&lt;/span&gt;&lt;span class="p"&gt;:&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="p"&gt;[&lt;/span&gt;
+&lt;span class="w"&gt;                  &lt;/span&gt;&lt;span class="s2"&gt;&amp;quot;--directory&amp;quot;&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt;
+&lt;span class="w"&gt;                  &lt;/span&gt;&lt;span class="s2"&gt;&amp;quot;/home/vasudev/Documents/personal/FOSS/debsecan-mcp/debsecan-mcp&amp;quot;&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt;
+&lt;span class="w"&gt;                  &lt;/span&gt;&lt;span class="s2"&gt;&amp;quot;run&amp;quot;&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt;
+&lt;span class="w"&gt;                  &lt;/span&gt;&lt;span class="s2"&gt;&amp;quot;debsecan-mcp&amp;quot;&lt;/span&gt;
+&lt;span class="w"&gt;              &lt;/span&gt;&lt;span class="p"&gt;]&lt;/span&gt;
+&lt;span class="w"&gt;          &lt;/span&gt;&lt;span class="p"&gt;}&lt;/span&gt;
+&lt;span class="w"&gt;  &lt;/span&gt;&lt;span class="p"&gt;},&lt;/span&gt;
+&lt;span class="w"&gt;  &lt;/span&gt;&lt;span class="nt"&gt;&amp;quot;inputs&amp;quot;&lt;/span&gt;&lt;span class="p"&gt;:&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="p"&gt;[]&lt;/span&gt;
+&lt;span class="p"&gt;}&lt;/span&gt;
+&lt;/pre&gt;&lt;/div&gt;
+&lt;ol class="arabic simple" start="3"&gt;
+&lt;li&gt;I am running it directly from my local codebase using a virtualenv created
+with &lt;em&gt;uv&lt;/em&gt;. You may need to tweak the path based on your installation.&lt;/li&gt;
+&lt;li&gt;To use the MCP server in the Copilot chat window, reference it using
+&lt;cite&gt;#debsecan-mcp&lt;/cite&gt;. The LLM will then use the server for the query.&lt;/li&gt;
+&lt;li&gt;Use a prompt like: &lt;em&gt;&amp;quot;Give an executive summary of the system security status
+and immediate actions to be taken.&amp;quot;&lt;/em&gt;&lt;/li&gt;
+&lt;li&gt;You can observe the LLM using &lt;cite&gt;list_vulnerabilities&lt;/cite&gt; followed by
+&lt;cite&gt;research_cves&lt;/cite&gt;. Because the first tool only provides CVE IDs based on
+severity, the LLM is smart enough to research only high and critical
+vulnerabilities, thereby saving tokens.&lt;/li&gt;
+&lt;/ol&gt;
+&lt;/div&gt;
+&lt;div class="section" id="what-s-next"&gt;
+&lt;h2&gt;What's Next?&lt;/h2&gt;
+&lt;p&gt;This MCP is not yet perfect and has the following issues:&lt;/p&gt;
+&lt;ol class="arabic simple"&gt;
+&lt;li&gt;The &lt;cite&gt;list_vulnerabilities&lt;/cite&gt; dictionary contains duplicate CVE IDs because the
+code used a list instead of a set. While the LLM is smart enough to
+deduplicate these, it still costs extra tokens.&lt;/li&gt;
+&lt;li&gt;Because I initially modeled this on &lt;cite&gt;debsecan&lt;/cite&gt;, it uses a raw method for
+parsing &lt;cite&gt;/var/lib/dpkg/status&lt;/cite&gt; instead of &lt;cite&gt;python-apt&lt;/cite&gt;. I am considering
+switching to &lt;cite&gt;python-apt&lt;/cite&gt; to reduce maintenance overhead.&lt;/li&gt;
+&lt;li&gt;Interestingly, the AI did not add a single unit test, which is disappointing.
+I will add these once my limits are restored.&lt;/li&gt;
+&lt;li&gt;I need to create a cleaner README with usage instructions.&lt;/li&gt;
+&lt;li&gt;I need to determine if the MCP can be used via HTTP as well as stdio.&lt;/li&gt;
+&lt;/ol&gt;
+&lt;/div&gt;
+&lt;div class="section" id="conclusion"&gt;
+&lt;h2&gt;Conclusion&lt;/h2&gt;
+&lt;p&gt;Vibe coding is interesting, but things can get out of hand if not managed
+properly. Even with a good process, code must be reviewed and tested; you cannot
+blindly trust an AI to handle everything. Even if it adds tests, you must
+validate them, or you are doomed!&lt;/p&gt;
+&lt;/div&gt;
+</content><category term="development"/><category term="generative_ai"/><category term="debsecan"/><category term="mcp"/><category term="llm"/><category term="debian"/></entry><entry><title>Moving blog from self hosting to Github Pages</title><link href="https://copyninja.in/blog/move-back-to-github.html" rel="alternate"/><published>2025-11-16T10:32:00+05:30</published><updated>2025-11-16T10:32:00+05:30</updated><author><name>copyninja</name></author><id>tag:copyninja.in,2025-11-16:/blog/move-back-to-github.html</id><summary type="html">&lt;p class="first last"&gt;Moving the blog to Github pages&lt;/p&gt;
 </summary><content type="html">&lt;p&gt;I haven't been blogging as much as I used to. For a while, I've been hosting my
 blog on a single-core DigitalOcean droplet, which cost me around $7 per month.
 It also hosted my mail server. Most of the time, the droplet was idle, and I
