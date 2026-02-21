@@ -68,6 +68,6 @@ jobs:
         if: github.event_name == 'pull_request'
         uses: rossjrw/pr-preview-action@v1
         with:
-          source-dir: site/output
+          source-dir: ./output
           preview-branch: gh-pages
           umbrella-dir: pr-preview
