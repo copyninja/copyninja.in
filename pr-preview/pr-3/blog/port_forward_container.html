@@ -1,0 +1,100 @@
+<!DOCTYPE html><html lang="en"><head><link href="https://fonts.googleapis.com/css?family=Cantarell" rel="stylesheet"><title>Forwarding host port to service in container</title><meta http-equiv="Content-Type" content="text/html; charset=UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1"><link href="https://copyninja.in/feeds/all.atom.xml" type="application/atom+xml" rel="alternate" title="Random Ramblings Full Atom Feed"><link href="https://copyninja.in/feeds/{slug}.atom.xml" type="application/atom+xml" rel="alternate" title="Random Ramblings Categories Atom Feed"><link rel="stylesheet" type="text/css" href="/theme/css/pygments.css"><link rel="stylesheet" type="text/css" href="/theme/css/default.css"><meta name="tags" content="iptables"><meta name="tags" content="firewall"><meta name="tags" content="container"></head><body><div id="header" class="body"><div id="navigation"> | <a href="https://copyninja.in">Home</a> | | <a href="https://copyninja.in/about">About</a> | | <a href="https://copyninja.in/contact">Contact</a> | | <a href="https://copyninja.in/categories.html">Categories</a> | | <a href="https://copyninja.in/tags.html">Tags</a> | </div><h1><a href="https://copyninja.in/blog/port_forward_container.html">Forwarding host port to service in container</a></h1></div><div id="content"><section id="content" class="body"><footer class="post-info"><p> Posted on Nov 09, 2015 By copyninja under devops </p></abbr></footer><div class="entry-content"><div class="section" id="problem"><h2>Problem</h2><p>I've lxc container running distcc daemon and I would like to forward the distcc traffic coming to my host system to container.</p></div><div class="section" id="solution"><h2>Solution</h2><p>Following simple script which uses iptable did the job.</p><div class="highlight"><pre><span></span><span class="w"> </span><span class="c1">#!/bin/sh</span>
+<span class="w"> </span><span class="nb">set</span><span class="w"> </span>-e
+
+
+usage<span class="o">()</span><span class="w"> </span><span class="o">{</span>
+<span class="w">    </span>cat<span class="w"> </span><span class="s">&lt;&lt;EOF</span>
+<span class="s">    $(basename $0) [options] &lt;in-interface&gt; &lt;out-interface&gt; &lt;port&gt; &lt;destination&gt;</span>
+
+<span class="s">    --clear           Clear the previous rules before inserting new</span>
+<span class="s">                      ones</span>
+
+<span class="s">    --protocol        Protocol for the rules to use.</span>
+
+<span class="s">    in-interface      Interface on which incoming traffic is expected</span>
+<span class="s">    out-interface     Interface to which incoming traffic is to be</span>
+<span class="s">                      forwarded.</span>
+
+<span class="s">    port              Port to be forwarded. Can be integer or string</span>
+<span class="s">                      from /etc/services.</span>
+<span class="s">    destination       IP and port of the destination system to which</span>
+<span class="s">                      traffic needs to be forwarded. This should be in</span>
+<span class="s">                      form &lt;destination_ip:port&gt;</span>
+
+<span class="s">(C) 2015 Vasudev Kamath - This program comes with ABSOLUTELY NO</span>
+<span class="s">WARRANTY. This is free software, and you are welcome to redistribute</span>
+<span class="s">it under the GNU GPL Version 3 (or later) License</span>
+
+<span class="s">EOF</span>
+<span class="o">}</span>
+
+setup_portforwarding<span class="w"> </span><span class="o">()</span><span class="w"> </span><span class="o">{</span>
+<span class="w">    </span><span class="nb">local</span><span class="w"> </span><span class="nv">protocol</span><span class="o">=</span><span class="s2">&quot;</span><span class="nv">$1</span><span class="s2">&quot;</span>
+<span class="w">    </span>iptables<span class="w"> </span>-t<span class="w"> </span>nat<span class="w"> </span>-A<span class="w"> </span>PREROUTING<span class="w"> </span>-i<span class="w"> </span><span class="nv">$IN_INTERFACE</span><span class="w"> </span>-p<span class="w"> </span><span class="s2">&quot;</span><span class="nv">$protocol</span><span class="s2">&quot;</span><span class="w"> </span>--dport<span class="w"> </span><span class="nv">$PORT</span><span class="w"> </span><span class="se">\</span>
+<span class="w">           </span>-j<span class="w"> </span>DNAT<span class="w"> </span>--to<span class="w"> </span><span class="nv">$DESTINATION</span>
+<span class="w">    </span>iptables<span class="w"> </span>-A<span class="w"> </span>FORWARD<span class="w"> </span>-p<span class="w"> </span><span class="s2">&quot;</span><span class="nv">$protocol</span><span class="s2">&quot;</span><span class="w"> </span>-d<span class="w"> </span><span class="si">${</span><span class="nv">DESTINATION</span><span class="p">%%</span><span class="se">\:</span><span class="p">*</span><span class="si">}</span><span class="w"> </span>--dport<span class="w"> </span><span class="nv">$PORT</span><span class="w"> </span>-j<span class="w"> </span>ACCEPT
+
+<span class="w">    </span><span class="c1"># Returning packet should have gateway IP</span>
+<span class="w">    </span>iptables<span class="w"> </span>-t<span class="w"> </span>nat<span class="w"> </span>-A<span class="w"> </span>POSTROUTING<span class="w"> </span>-s<span class="w"> </span><span class="si">${</span><span class="nv">DESTINATION</span><span class="p">%%</span><span class="se">\:</span><span class="p">*</span><span class="si">}</span><span class="w"> </span>-o<span class="w"> </span><span class="se">\</span>
+<span class="w">           </span><span class="nv">$IN_INTERFACE</span><span class="w"> </span>-j<span class="w"> </span>SNAT<span class="w"> </span>--to<span class="w"> </span><span class="si">${</span><span class="nv">IN_IP</span><span class="p">%%</span><span class="se">\/</span><span class="p">*</span><span class="si">}</span>
+
+<span class="o">}</span>
+
+<span class="k">if</span><span class="w"> </span><span class="o">[</span><span class="w"> </span><span class="k">$(</span>id<span class="w"> </span>-u<span class="k">)</span><span class="w"> </span>-ne<span class="w"> </span><span class="m">0</span><span class="w"> </span><span class="o">]</span><span class="p">;</span><span class="w"> </span><span class="k">then</span>
+<span class="w">    </span><span class="nb">echo</span><span class="w"> </span><span class="s2">&quot;You need to be root to run this script&quot;</span>
+<span class="w">    </span><span class="nb">exit</span><span class="w"> </span><span class="m">1</span>
+<span class="k">fi</span>
+
+<span class="k">while</span><span class="w"> </span>true<span class="p">;</span><span class="w"> </span><span class="k">do</span>
+<span class="w">    </span><span class="k">case</span><span class="w"> </span><span class="s2">&quot;</span><span class="nv">$1</span><span class="s2">&quot;</span><span class="w"> </span><span class="k">in</span>
+<span class="w">      </span>--clear<span class="o">)</span>
+<span class="w">          </span><span class="nv">CLEAR_RULES</span><span class="o">=</span><span class="m">1</span>
+<span class="w">          </span><span class="nb">shift</span>
+<span class="w">          </span><span class="p">;;</span>
+<span class="w">      </span>--protocol<span class="p">|</span>--protocol<span class="o">=</span>*?<span class="o">)</span>
+<span class="w">      </span><span class="k">if</span><span class="w"> </span><span class="o">[</span><span class="w"> </span><span class="s2">&quot;</span><span class="nv">$1</span><span class="s2">&quot;</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;--protocol&quot;</span><span class="w"> </span>-a<span class="w"> </span>-n<span class="w"> </span><span class="s2">&quot;</span><span class="nv">$2</span><span class="s2">&quot;</span><span class="w"> </span><span class="o">]</span><span class="p">;</span><span class="k">then</span>
+<span class="w">          </span><span class="nv">PROTOCOL</span><span class="o">=</span><span class="s2">&quot;</span><span class="nv">$2</span><span class="s2">&quot;</span>
+<span class="w">          </span><span class="nb">shift</span><span class="w"> </span><span class="m">2</span>
+<span class="w">      </span><span class="k">elif</span><span class="w"> </span><span class="o">[</span><span class="w"> </span><span class="s2">&quot;</span><span class="si">${</span><span class="nv">1</span><span class="p">#--protocol=</span><span class="si">}</span><span class="s2">&quot;</span><span class="w"> </span>!<span class="o">=</span><span class="w"> </span><span class="s2">&quot;</span><span class="nv">$1</span><span class="s2">&quot;</span><span class="w"> </span><span class="o">]</span><span class="p">;</span><span class="w"> </span><span class="k">then</span>
+<span class="w">          </span><span class="nv">PROTOCOL</span><span class="o">=</span><span class="s2">&quot;</span><span class="si">${</span><span class="nv">1$-</span><span class="p">-protocol=</span><span class="si">}</span><span class="s2">&quot;</span>
+<span class="w">          </span><span class="nb">shift</span><span class="w"> </span><span class="m">1</span>
+<span class="w">      </span><span class="k">else</span>
+<span class="w">          </span><span class="nb">echo</span><span class="w"> </span><span class="s2">&quot;You need to specify protocl (tcp|udp)&quot;</span>
+<span class="w">          </span><span class="nb">exit</span><span class="w"> </span><span class="m">2</span>
+<span class="w">      </span><span class="k">fi</span>
+<span class="w">      </span><span class="p">;;</span>
+
+<span class="w">      </span>*<span class="o">)</span>
+<span class="w">          </span><span class="k">break</span>
+<span class="w">          </span><span class="p">;;</span>
+<span class="w">    </span><span class="k">esac</span>
+<span class="k">done</span>
+
+<span class="k">if</span><span class="w"> </span><span class="o">[</span><span class="w"> </span><span class="nv">$#</span><span class="w"> </span>-ne<span class="w"> </span><span class="m">4</span><span class="w"> </span><span class="o">]</span><span class="p">;</span><span class="w"> </span><span class="k">then</span>
+<span class="w">    </span>usage<span class="w"> </span><span class="nv">$0</span>
+<span class="w">    </span><span class="nb">exit</span><span class="w"> </span><span class="m">2</span>
+<span class="k">fi</span>
+
+<span class="nv">IN_INTERFACE</span><span class="o">=</span><span class="s2">&quot;</span><span class="nv">$1</span><span class="s2">&quot;</span>
+<span class="nv">OUT_INTERFACE</span><span class="o">=</span><span class="s2">&quot;</span><span class="nv">$2</span><span class="s2">&quot;</span>
+<span class="nv">PORT</span><span class="o">=</span><span class="s2">&quot;</span><span class="nv">$3</span><span class="s2">&quot;</span>
+<span class="nv">DESTINATION</span><span class="o">=</span><span class="s2">&quot;</span><span class="nv">$4</span><span class="s2">&quot;</span>
+
+<span class="c1"># Get the incoming interface IP. This is used for SNAT.</span>
+<span class="nv">IN_IP</span><span class="o">=</span><span class="k">$(</span>ip<span class="w"> </span>addr<span class="w"> </span>show<span class="w"> </span><span class="nv">$IN_INTERFACE</span><span class="p">|</span><span class="se">\</span>
+<span class="w">             </span>perl<span class="w"> </span>-nE<span class="w"> </span><span class="s1">&#39;/inet\s(.*)\sbrd/ and print $1&#39;</span><span class="k">)</span>
+
+
+<span class="k">if</span><span class="w"> </span><span class="o">[</span><span class="w"> </span>-n<span class="w"> </span><span class="s2">&quot;</span><span class="nv">$CLEAR_RULES</span><span class="s2">&quot;</span><span class="w"> </span><span class="o">]</span><span class="p">;</span><span class="w"> </span><span class="k">then</span>
+<span class="w">    </span>iptables<span class="w"> </span>-t<span class="w"> </span>nat<span class="w"> </span>-X
+<span class="w">    </span>iptables<span class="w"> </span>-t<span class="w"> </span>nat<span class="w"> </span>-F
+<span class="w">    </span>iptables<span class="w"> </span>-F
+<span class="k">fi</span>
+
+<span class="k">if</span><span class="w"> </span><span class="o">[</span><span class="w"> </span>-n<span class="w"> </span><span class="s2">&quot;</span><span class="nv">$PROTOCOL</span><span class="s2">&quot;</span><span class="w"> </span><span class="o">]</span><span class="p">;</span><span class="w"> </span><span class="k">then</span>
+<span class="w">    </span>setup_portforwarding<span class="w"> </span><span class="nv">$PROTOCOL</span>
+<span class="k">else</span>
+<span class="w">    </span>setup_portforwarding<span class="w"> </span>tcp
+<span class="w">    </span>setup_portforwarding<span class="w"> </span>udp
+<span class="k">fi</span>
+</pre></div><p>Coming to systemd-nspawn I see there is <em>--port</em> option which takes argument in form <em>proto:hostport:destport</em> where proto can be either <em>tcp</em> or <em>udp</em>, <em>hostport</em> and <em>destport</em> are number from 1-65535. This option assumes private networking enabled in the container. I've not tried this option yet but that simplifies quite a lot of thing, its like -p switch used by <em>docker</em>.</p></div></div><div id="footer"><p><italic>Tagged as: container, firewall, iptables, </italic></p></section></div><hr><div id="footer"> Site Proudly powered by <a href="http://getpelican.com/">Pelican</a></div></body></html>

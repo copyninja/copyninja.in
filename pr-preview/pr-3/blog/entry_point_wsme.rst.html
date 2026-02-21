@@ -1,0 +1,82 @@
+<!DOCTYPE html><html lang="en"><head><link href="https://fonts.googleapis.com/css?family=Cantarell" rel="stylesheet"><title>Exposing function in python module using entry_points, WSME in a Flask webapp</title><meta http-equiv="Content-Type" content="text/html; charset=UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1"><link href="https://copyninja.in/feeds/all.atom.xml" type="application/atom+xml" rel="alternate" title="Random Ramblings Full Atom Feed"><link href="https://copyninja.in/feeds/{slug}.atom.xml" type="application/atom+xml" rel="alternate" title="Random Ramblings Categories Atom Feed"><link rel="stylesheet" type="text/css" href="/theme/css/pygments.css"><link rel="stylesheet" type="text/css" href="/theme/css/default.css"><meta name="tags" content="python"><meta name="tags" content="programming"><meta name="tags" content="wsme"><meta name="tags" content="rest"><meta name="tags" content="setuptools"></head><body><div id="header" class="body"><div id="navigation"> | <a href="https://copyninja.in">Home</a> | | <a href="https://copyninja.in/about">About</a> | | <a href="https://copyninja.in/contact">Contact</a> | | <a href="https://copyninja.in/categories.html">Categories</a> | | <a href="https://copyninja.in/tags.html">Tags</a> | </div><h1><a href="https://copyninja.in/blog/entry_point_wsme.rst.html">Exposing function in python module using entry_points, WSME in a Flask webapp</a></h1></div><div id="content"><section id="content" class="body"><footer class="post-info"><p> Posted on Jun 07, 2014 By copyninja under development </p></abbr></footer><div class="entry-content"><p>The heading might be ambiguous, but I couldn't figure out better heading so let me start by explaining what I'm trying to solve here.</p><div class="section" id="problem"><h2>Problem</h2><p>I have a python module which contains a function which I want to expose as a REST web service in a Flask application. I use WSME for Flask application, which actually needs signature of function in question and problem comes to picture because function to be exposed is foreign to Flask application, it resides in separate python module.</p></div><div class="section" id="solution"><h2>Solution</h2><p>While reading <a class="reference external" href="http://julien.danjou.info/">Julien Danjou's</a> <em>Hackers Guide To Python</em> book I came across the setuptools <cite>entry_points</cite> concept which can be used to extend existing feature of a tool like plug-ins. So here I'm going to use this <cite>entry_points</cite> feature from setuptools to provide function in the module which can expose the signature of function[s] to be exposed through REST. Of course this means I need to modify module in question to write entry_points and function for giving out signature of function to be exposed.</p><p>I will explain this with small example. I have a dummy module which provides a add function and a function which exposes the add functions signature.</p><div class="highlight"><pre><span></span><span class="k">def</span> <span class="nf">add</span><span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="n">b</span><span class="p">):</span>
+    <span class="k">return</span> <span class="n">a</span> <span class="o">+</span> <span class="n">b</span>
+
+<span class="k">def</span> <span class="nf">expose_rest_func</span><span class="p">():</span>
+    <span class="k">return</span> <span class="p">[</span><span class="n">add</span><span class="p">,</span> <span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">]</span>
+</pre></div><p>This is stored in <cite>dummy/__init__.py</cite> file. I use <cite>pbr</cite> tool to package my python module. Below is content of <cite>setup.cfg</cite> file.</p><div class="highlight"><pre><span></span><span class="p">[</span><span class="n">metadata</span><span class="p">]</span>
+<span class="n">name</span> <span class="o">=</span> <span class="n">dummy</span>
+<span class="n">author</span> <span class="o">=</span> <span class="n">Vasudev</span> <span class="n">Kamath</span>
+<span class="n">author</span><span class="o">-</span><span class="n">email</span> <span class="o">=</span> <span class="n">kamathvasudev</span><span class="nd">@gmail</span><span class="o">.</span><span class="n">com</span>
+<span class="n">summary</span> <span class="o">=</span> <span class="n">Dummy</span> <span class="n">module</span> <span class="k">for</span> <span class="n">testing</span> <span class="n">purpose</span>
+<span class="n">version</span> <span class="o">=</span> <span class="mf">0.1</span>
+<span class="n">license</span> <span class="o">=</span> <span class="n">MIT</span>
+<span class="n">description</span><span class="o">-</span><span class="n">file</span> <span class="o">=</span>
+  <span class="n">README</span><span class="o">.</span><span class="n">rst</span>
+<span class="n">requires</span><span class="o">-</span><span class="n">python</span> <span class="o">=</span> <span class="o">&gt;=</span> <span class="mf">2.7</span>
+
+<span class="p">[</span><span class="n">files</span><span class="p">]</span>
+<span class="n">packages</span> <span class="o">=</span>
+  <span class="n">dummy</span>
+
+<span class="p">[</span><span class="n">entry_points</span><span class="p">]</span> <span class="o">=</span>
+<span class="n">myapp</span><span class="o">.</span><span class="n">api</span><span class="o">.</span><span class="n">rest</span> <span class="o">=</span>
+  <span class="n">rest</span> <span class="o">=</span> <span class="n">dummy</span><span class="p">:</span><span class="n">expose_rest_func</span>
+</pre></div><p>The special thing in above file is <cite>entry_points</cite> section, which defines function to be hooked into entry_point. In our case entry_point <cite>myapp.api.rest</cite> is used by our Flask application to interact with modules which expose them. The function which will be got accessing the entry_point is <cite>expose_rest_func</cite> which gives the function to be exposed its arg types and return types as a list.</p><p>If we are looking at only supporting python3 it was sufficient to know function name only and use <a class="reference external" href="http://legacy.python.org/dev/peps/pep-3107">function annotations</a> in function definition. Since I want to support both python2 and python3 this is out of question.</p><p>Now, just run the following command in virtualenv to get the module installed.</p><div class="highlight"><pre><span></span><span class="go">PBR_VERSION=0.1 python setup.py sdist</span>
+<span class="go">pip install dist/dummy_module-0.1.tar.gz</span>
+</pre></div><p>Now if you want to see if the module is exposing entry_point or not just use <cite>entry_point_inspector</cite> tool after installing you will get a command called <cite>epi</cite> if you run it as follows you should note the dummy_module in its output</p><div class="highlight"><pre><span></span><span class="go">epi group list</span>
+<span class="go">+-----------------------------+</span>
+<span class="go">| Name                        |</span>
+<span class="go">+-----------------------------+</span>
+<span class="go">| cliff.formatter.completion  |</span>
+<span class="go">| cliff.formatter.list        |</span>
+<span class="go">| cliff.formatter.show        |</span>
+<span class="go">| console_scripts             |</span>
+<span class="go">| distutils.commands          |</span>
+<span class="go">| distutils.setup_keywords    |</span>
+<span class="go">| egg_info.writers            |</span>
+<span class="go">| epi.commands                |</span>
+<span class="go">| flake8.extension            |</span>
+<span class="go">| setuptools.file_finders     |</span>
+<span class="go">| setuptools.installation     |</span>
+<span class="go">| myapp.api.rest              |</span>
+<span class="go">| stevedore.example.formatter |</span>
+<span class="go">| stevedore.test.extension    |</span>
+<span class="go">| wsme.protocols              |</span>
+<span class="go">+-----------------------------+</span>
+</pre></div><p>So our entry_point is exposed now, we need to access it in our Flask application and expose the function using WSME. It is done by below code.</p><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">wsmeext.flask</span> <span class="kn">import</span> <span class="n">signature</span>
+
+<span class="kn">import</span> <span class="nn">flask</span>
+<span class="kn">import</span> <span class="nn">pkg_resources</span>
+
+
+<span class="k">def</span> <span class="nf">main</span><span class="p">():</span>
+   <span class="n">app</span> <span class="o">=</span> <span class="n">flask</span><span class="o">.</span><span class="n">Flask</span><span class="p">(</span><span class="vm">__name__</span><span class="p">)</span>
+   <span class="n">app</span><span class="o">.</span><span class="n">config</span><span class="p">[</span><span class="s1">&#39;DEBUG&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="kc">True</span>
+   <span class="k">for</span> <span class="n">entrypoint</span> <span class="ow">in</span> <span class="n">pkg_resources</span><span class="o">.</span><span class="n">iter_entry_points</span><span class="p">(</span><span class="s1">&#39;myapp.api.rest&#39;</span><span class="p">):</span>
+       <span class="c1"># Ugly but fix is only supporting python3</span>
+       <span class="n">func_signature</span> <span class="o">=</span> <span class="n">entrypoint</span><span class="o">.</span><span class="n">load</span><span class="p">()()</span>
+       <span class="n">app</span><span class="o">.</span><span class="n">route</span><span class="p">(</span><span class="s1">&#39;/&#39;</span> <span class="o">+</span> <span class="n">func_signature</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="vm">__name__</span><span class="p">,</span> <span class="n">methods</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;POST&#39;</span><span class="p">])(</span>
+           <span class="n">signature</span><span class="p">(</span><span class="n">func_signature</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span>
+               <span class="o">*</span><span class="n">func_signature</span><span class="p">[</span><span class="mi">1</span><span class="p">:</span><span class="o">-</span><span class="mi">1</span><span class="p">])(</span><span class="n">func_signature</span><span class="p">[</span><span class="mi">0</span><span class="p">]))</span>
+   <span class="n">app</span><span class="o">.</span><span class="n">run</span><span class="p">()</span>
+
+<span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s1">&#39;__main__&#39;</span><span class="p">:</span>
+    <span class="n">main</span><span class="p">()</span>
+</pre></div><p>entry_point <cite>myapp.api.rest</cite> are iterated using the pkg_resources package provided by setuptools, when I load the entry_point I get back the function to be used which is called in same place to get function signature. Then I'm calling Flask and WSME decorator functions (yeah instead of decorating I'm using them directly over function to be exposed).</p><p>The code looks bit ugly at the place where I'm accessing list using slices but I can't help it due to limitation of python2 with python3 there is new packing and unpacking stuff which makes code look bit more cooler see below.</p><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">wsmeext.flask</span> <span class="kn">import</span> <span class="n">signature</span>
+
+<span class="kn">import</span> <span class="nn">flask</span>
+<span class="kn">import</span> <span class="nn">pkg_resources</span>
+
+
+<span class="k">def</span> <span class="nf">main</span><span class="p">():</span>
+    <span class="n">app</span> <span class="o">=</span> <span class="n">flask</span><span class="o">.</span><span class="n">Flask</span><span class="p">(</span><span class="vm">__name__</span><span class="p">)</span>
+    <span class="n">app</span><span class="o">.</span><span class="n">config</span><span class="p">[</span><span class="s1">&#39;DEBUG&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="kc">True</span>
+    <span class="k">for</span> <span class="n">entrypoint</span> <span class="ow">in</span> <span class="n">pkg_resources</span><span class="o">.</span><span class="n">iter_entry_points</span><span class="p">(</span><span class="s1">&#39;silpa.api.rest&#39;</span><span class="p">):</span>
+        <span class="n">func</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="n">rettype</span> <span class="o">=</span> <span class="n">entrypoint</span><span class="o">.</span><span class="n">load</span><span class="p">()()</span>
+        <span class="n">app</span><span class="o">.</span><span class="n">route</span><span class="p">(</span><span class="s1">&#39;/&#39;</span> <span class="o">+</span> <span class="n">func</span><span class="o">.</span><span class="vm">__name__</span><span class="p">,</span> <span class="n">methods</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;POST&#39;</span><span class="p">])(</span>
+        <span class="n">signature</span><span class="p">(</span><span class="n">rettype</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">)(</span><span class="n">func_signature</span><span class="p">[</span><span class="mi">0</span><span class="p">]))</span>
+    <span class="n">app</span><span class="o">.</span><span class="n">run</span><span class="p">()</span>
+
+<span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s1">&#39;__main__&#39;</span><span class="p">:</span>
+    <span class="n">main</span><span class="p">()</span>
+</pre></div><p>You can access the service at <cite>http://localhost:5000/add</cite> depending on <cite>Accept</cite> header of HTTP you will get either XML or JSON response. If you access it from browser you will get XML response.</p></div><div class="section" id="usecase"><h2>Usecase</h2><p>Now if you are wondering what is the reason behind this experience, this is for <a class="reference external" href="http://silpa.org.in">SILPA Project</a>. I'm trying to implement REST service for all Indic language computing module. Since all these module are independent of SILPA which is a Flask web app I had to find a way to achieve this, and this is what I came up with.</p></div><div class="section" id="conclusion"><h2>Conclusion</h2><p>I'm not sure if there is any other approaches to achieve this, if there I would love to hear about them. You can write your comments and suggestion over <a class="reference external" href="http://scr.im/vasudev">email</a></p></div></div><div id="footer"><p><italic>Tagged as: programming, python, rest, setuptools, wsme, </italic></p></section></div><hr><div id="footer"> Site Proudly powered by <a href="http://getpelican.com/">Pelican</a></div></body></html>

@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="utf-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom"><title>Random Ramblings - security</title><link href="https://copyninja.in/" rel="alternate"/><link href="https://copyninja.in/feeds/security.atom.xml" rel="self"/><id>https://copyninja.in/</id><updated>2017-05-07T15:00:00+05:30</updated><subtitle>Random thoughts shooting out of volatile mind</subtitle><entry><title>Tips for fuzzing network programs with AFL</title><link href="https://copyninja.in/blog/afl-and-network-programs.html" rel="alternate"/><published>2017-05-07T15:00:00+05:30</published><updated>2017-05-07T15:00:00+05:30</updated><author><name>copyninja</name></author><id>tag:copyninja.in,2017-05-07:/blog/afl-and-network-programs.html</id><summary type="html">&lt;p class="first last"&gt;Post provide tips on how to successfully fuzz network programs with
+AFL (American Fuzzy Lop)&lt;/p&gt;
+</summary><content type="html">&lt;p&gt;Fuzzing is method of producing random malformed inputs for a software and
+observe the software behavior. If a software crashes then there is a bug and it
+can have security implications. Fuzzing has gained a lot of interest now a days,
+especially with automated tools like American Fuzzy Lop (AFL) which can easily
+help you to fuzz the program and record inputs which causes crash in the
+software.&lt;/p&gt;
+&lt;p&gt;American Fuzzy Lop is a file based fuzzer which feeds input to program via
+standard input. Using it with network program like server's or clients is not
+possible in the original state. There is a &lt;a class="reference external" href="https://github.com/jdbirdwell/afl"&gt;version&lt;/a&gt; of AFL with patches to allow it fuzz
+network programs, but this patch is not merged upstream and I do not know if it
+ever makes into upstream or not. Also the above repository contains version 1.9
+which is older compared to currently released versions.&lt;/p&gt;
+&lt;p&gt;There is another method for fuzzing network program using AFL with help of
+&lt;em&gt;LD_PRELOAD&lt;/em&gt; tricks. &lt;a class="reference external" href="https://github.com/zardus/preeny"&gt;preeny&lt;/a&gt;  is a project
+which provides library which when used with LD_PRELOAD can desocket the network
+program and make it read from &lt;em&gt;stdin&lt;/em&gt;.&lt;/p&gt;
+&lt;p&gt;There is this best tutorial from &lt;a class="reference external" href="https://lolware.net/2015/04/28/nginx-fuzzing.html"&gt;LoLWare&lt;/a&gt; which talks about fuzzing
+Nginx with &lt;em&gt;preeny&lt;/em&gt; and AFL. There is a best AFL workflow by &lt;a class="reference external" href="https://foxglovesecurity.com/2016/03/15/fuzzing-workflows-a-fuzz-job-from-start-to-finish/"&gt;Foxglove Security&lt;/a&gt;
+which gives start to finish details about how to use AFL and its companion tool
+to do fuzzing. So I'm not going to talk about any steps of fuzzing in this post
+instead I'm going to list down my observations on changes that needs to be done
+to get clean fuzzing with AFL and preeny.&lt;/p&gt;
+&lt;ol class="arabic simple"&gt;
+&lt;li&gt;desock.so provided by preeny works only with &lt;em&gt;read&lt;/em&gt; and &lt;em&gt;write&lt;/em&gt; (or rather
+other system call does not work with stdin) system calls and hence you need
+to make sure you replace any reference to &lt;em&gt;send&lt;/em&gt;, &lt;em&gt;sendto&lt;/em&gt;, &lt;em&gt;recv&lt;/em&gt; and
+&lt;em&gt;recvfrom&lt;/em&gt; with &lt;em&gt;read&lt;/em&gt; and &lt;em&gt;write&lt;/em&gt; system calls respectively. Without this
+change program will not read input provided by AFL on standard input.&lt;/li&gt;
+&lt;li&gt;If your network program is using forking or threading model make sure to
+remove all those and make it plain simple program which receives request and
+sends out response. Basically you are testing the ability of program to
+handle malformed input so we need very minimum logic to make program do what
+it is supposed to do when AFL runs it.&lt;/li&gt;
+&lt;li&gt;If you are using infinite loop like all normal programs replace the infinite
+loop with below mentioned AFL macro and use &lt;em&gt;afl-clang-fast&lt;/em&gt; to compile it.
+This speeds up the testing as AFL will run the job &lt;cite&gt;n&lt;/cite&gt; times before
+discarding the current fork and doing a fresh fork. After all fork is costly
+affair.&lt;/li&gt;
+&lt;/ol&gt;
+&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;&lt;span class="k"&gt;while&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;__AFL_LOOP&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="mi"&gt;1000&lt;/span&gt;&lt;span class="p"&gt;))&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="p"&gt;{&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="c1"&gt;// Change 1000 with iteration count&lt;/span&gt;
+&lt;span class="w"&gt;             &lt;/span&gt;&lt;span class="c1"&gt;// your logic here&lt;/span&gt;
+&lt;span class="p"&gt;}&lt;/span&gt;
+&lt;/pre&gt;&lt;/div&gt;
+&lt;p&gt;With above modification I could fuzz a server program talking binary protocol
+and another one talking textual protocol. In both case I used &lt;em&gt;Wireshark&lt;/em&gt;
+capture to get the packet extract raw content and feed it as input to AFL.&lt;/p&gt;
+&lt;p&gt;I was successful in finding crashes which are exploitable in case of textual
+protocol program than in binary protocol case. In case of binary protocol AFL
+could not easily find new paths which probably is because of bad inputs I
+provided. I will continue to do more experiment with binary protocol case and
+provide my findings as new updates here.&lt;/p&gt;
+&lt;p&gt;If you have anything more to add do share with me :-). Happy fuzzing!.&lt;/p&gt;
+</content><category term="security"/><category term="AFL"/><category term="fuzzing"/><category term="preeny"/><category term="security"/></entry></feed>
