@@ -1,0 +1,134 @@
+<!DOCTYPE html><html lang="en"><head><link href="https://fonts.googleapis.com/css?family=Cantarell" rel="stylesheet"><title>Taming systemd-nspawn for running containers</title><meta http-equiv="Content-Type" content="text/html; charset=UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1"><link href="https://copyninja.in/feeds/all.atom.xml" type="application/atom+xml" rel="alternate" title="Random Ramblings Full Atom Feed"><link href="https://copyninja.in/feeds/{slug}.atom.xml" type="application/atom+xml" rel="alternate" title="Random Ramblings Categories Atom Feed"><link rel="stylesheet" type="text/css" href="/theme/css/pygments.css"><link rel="stylesheet" type="text/css" href="/theme/css/default.css"><meta name="tags" content="systemd-nspawn"><meta name="tags" content="containers"><meta name="tags" content="debian"></head><body><div id="header" class="body"><div id="navigation"> | <a href="https://copyninja.in">Home</a> | | <a href="https://copyninja.in/about">About</a> | | <a href="https://copyninja.in/contact">Contact</a> | | <a href="https://copyninja.in/categories.html">Categories</a> | | <a href="https://copyninja.in/tags.html">Tags</a> | </div><h1><a href="https://copyninja.in/blog/taming_systemd_nsapwn.html">Taming systemd-nspawn for running containers</a></h1></div><div id="content"><section id="content" class="body"><footer class="post-info"><p> Posted on Nov 09, 2015 By copyninja under devops </p></abbr></footer><div class="entry-content"><p>I've been trying to run containers using systemd-nspawn for quite some time. I was always bumping to one or other dead end. This is not systemd-nspawn's fault, rather my impatience stopping me from reading manual pages properly lack of good tutorial like article available online. Compared to this LXC has a quite a lot of good tutorials and howto's available online.</p><p>This article is my effort to create a notes putting all required information in one place.</p><div class="section" id="creating-a-debian-base-install"><h2>Creating a Debian Base Install</h2><p>First step is to have a minimal Debian system some where on your hard disk. This can be easily done using <em>debootsrap</em>. I wrote a custom script to avoid reading manual every time I want to run debootstrap. Parts of this script (mostly packages and the root password generation) is stolen from <em>lxc-debian</em> template provided by lxc package.</p><div class="highlight"><pre><span></span><span class="ch">#!/bin/sh</span>
+
+<span class="nb">set</span><span class="w"> </span>-e
+<span class="nb">set</span><span class="w"> </span>-x
+
+usage<span class="w"> </span><span class="o">()</span><span class="w"> </span><span class="o">{</span>
+<span class="w">    </span><span class="nb">echo</span><span class="w"> </span><span class="s2">&quot;</span><span class="si">${</span><span class="nv">0</span><span class="p">##/*</span><span class="si">}</span><span class="s2"> [options] &lt;suite&gt; &lt;target&gt; [&lt;mirror&gt;]&quot;</span>
+<span class="w">    </span><span class="nb">echo</span><span class="w"> </span><span class="s2">&quot;Bootstrap rootfs for Debian&quot;</span>
+<span class="w">    </span><span class="nb">echo</span>
+<span class="w">    </span>cat<span class="w"> </span><span class="s">&lt;&lt;EOF</span>
+<span class="s">    --arch         set the architecture to install</span>
+<span class="s">    --root-passwd  set the root password for bootstrapped rootfs</span>
+<span class="s">    EOF</span>
+<span class="o">}</span>
+
+<span class="c1"># copied from the lxc-debian template</span>
+<span class="nv">packages</span><span class="o">=</span>ifupdown,<span class="se">\</span>
+locales,<span class="se">\</span>
+libui-dialog-perl,<span class="se">\</span>
+dialog,<span class="se">\</span>
+isc-dhcp-client,<span class="se">\</span>
+netbase,<span class="se">\</span>
+net-tools,<span class="se">\</span>
+iproute,<span class="se">\</span>
+openssh-server,<span class="se">\</span>
+dbus
+
+<span class="k">if</span><span class="w"> </span><span class="o">[</span><span class="w"> </span><span class="k">$(</span>id<span class="w"> </span>-u<span class="k">)</span><span class="w"> </span>-ne<span class="w"> </span><span class="m">0</span><span class="w"> </span><span class="o">]</span><span class="p">;</span><span class="w"> </span><span class="k">then</span>
+<span class="w">    </span><span class="nb">echo</span><span class="w"> </span><span class="s2">&quot;You must be root to execute this command&quot;</span>
+<span class="w">    </span><span class="nb">exit</span><span class="w"> </span><span class="m">2</span>
+<span class="k">fi</span>
+
+<span class="k">if</span><span class="w"> </span><span class="o">[</span><span class="w"> </span><span class="nv">$#</span><span class="w"> </span>-lt<span class="w"> </span><span class="m">2</span><span class="w"> </span><span class="o">]</span><span class="p">;</span><span class="w"> </span><span class="k">then</span>
+<span class="w">   </span>usage<span class="w"> </span><span class="nv">$0</span>
+<span class="k">fi</span>
+
+<span class="k">while</span><span class="w"> </span>true<span class="p">;</span><span class="w"> </span><span class="k">do</span>
+<span class="w">    </span><span class="k">case</span><span class="w"> </span><span class="s2">&quot;</span><span class="nv">$1</span><span class="s2">&quot;</span><span class="w"> </span><span class="k">in</span>
+<span class="w">        </span>--root-passwd<span class="p">|</span>--root-passwd<span class="o">=</span>?*<span class="o">)</span>
+<span class="w">            </span><span class="k">if</span><span class="w"> </span><span class="o">[</span><span class="w"> </span><span class="s2">&quot;</span><span class="nv">$1</span><span class="s2">&quot;</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;--root-passwd&quot;</span><span class="w"> </span>-a<span class="w"> </span>-n<span class="w"> </span><span class="s2">&quot;</span><span class="nv">$2</span><span class="s2">&quot;</span><span class="w"> </span><span class="o">]</span><span class="p">;</span><span class="w"> </span><span class="k">then</span>
+<span class="w">                </span><span class="nv">ROOT_PASSWD</span><span class="o">=</span><span class="s2">&quot;</span><span class="nv">$2</span><span class="s2">&quot;</span>
+<span class="w">                </span><span class="nb">shift</span><span class="w"> </span><span class="m">2</span>
+<span class="w">            </span><span class="k">elif</span><span class="w"> </span><span class="o">[</span><span class="w"> </span><span class="s2">&quot;</span><span class="nv">$1</span><span class="s2">&quot;</span><span class="w"> </span>!<span class="o">=</span><span class="w"> </span><span class="s2">&quot;</span><span class="si">${</span><span class="nv">1</span><span class="p">#--root-passwd=</span><span class="si">}</span><span class="s2">&quot;</span><span class="w"> </span><span class="o">]</span><span class="p">;</span><span class="w"> </span><span class="k">then</span>
+<span class="w">                </span><span class="nv">ROOT_PASSWD</span><span class="o">=</span><span class="s2">&quot;</span><span class="si">${</span><span class="nv">1</span><span class="p">#--root-passwd=</span><span class="si">}</span><span class="s2">&quot;</span>
+<span class="w">                </span><span class="nb">shift</span><span class="w"> </span><span class="m">1</span>
+<span class="w">            </span><span class="k">else</span>
+<span class="w">                </span><span class="c1"># copied from lxc-debian template</span>
+<span class="w">                </span><span class="nv">ROOT_PASSWD</span><span class="o">=</span><span class="s2">&quot;</span><span class="k">$(</span>dd<span class="w"> </span><span class="k">if</span><span class="o">=</span>/dev/urandom<span class="w"> </span><span class="nv">bs</span><span class="o">=</span><span class="m">6</span><span class="w"> </span><span class="nv">count</span><span class="o">=</span><span class="m">1</span><span class="w"> </span><span class="m">2</span>&gt;/dev/null<span class="p">|</span>base64<span class="k">)</span><span class="s2">&quot;</span>
+<span class="w">                </span><span class="nv">ECHO_PASSWD</span><span class="o">=</span><span class="s2">&quot;yes&quot;</span>
+<span class="w">            </span><span class="k">fi</span>
+<span class="w">            </span><span class="p">;;</span>
+<span class="w">        </span>--arch<span class="p">|</span>--arch<span class="o">=</span>?*<span class="o">)</span>
+<span class="w">            </span><span class="k">if</span><span class="w"> </span><span class="o">[</span><span class="w"> </span><span class="s2">&quot;</span><span class="nv">$1</span><span class="s2">&quot;</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;--arch&quot;</span><span class="w"> </span>-a<span class="w"> </span>-n<span class="w"> </span><span class="s2">&quot;</span><span class="nv">$2</span><span class="s2">&quot;</span><span class="w"> </span><span class="o">]</span><span class="p">;</span><span class="w"> </span><span class="k">then</span>
+<span class="w">                </span><span class="nv">ARCHITECTURE</span><span class="o">=</span><span class="s2">&quot;</span><span class="nv">$2</span><span class="s2">&quot;</span>
+<span class="w">                </span><span class="nb">shift</span><span class="w"> </span><span class="m">2</span>
+<span class="w">            </span><span class="k">elif</span><span class="w"> </span><span class="o">[</span><span class="w"> </span><span class="s2">&quot;</span><span class="nv">$1</span><span class="s2">&quot;</span><span class="w"> </span>!<span class="o">=</span><span class="w"> </span><span class="s2">&quot;</span><span class="si">${</span><span class="nv">1</span><span class="p">#--arch=</span><span class="si">}</span><span class="s2">&quot;</span><span class="w"> </span><span class="o">]</span><span class="p">;</span><span class="w"> </span><span class="k">then</span>
+<span class="w">                </span><span class="nv">ARCHITECTURE</span><span class="o">=</span><span class="s2">&quot;</span><span class="si">${</span><span class="nv">1</span><span class="p">#--arch=</span><span class="si">}</span><span class="s2">&quot;</span>
+<span class="w">                </span><span class="nb">shift</span><span class="w"> </span><span class="m">1</span>
+<span class="w">            </span><span class="k">else</span>
+<span class="w">                </span><span class="nv">ARCHITECTURE</span><span class="o">=</span><span class="s2">&quot;</span><span class="k">$(</span>dpkg-architecture<span class="w"> </span>-q<span class="w"> </span>DEB_HOST_ARCH<span class="k">)</span><span class="s2">&quot;</span>
+<span class="w">            </span><span class="k">fi</span>
+<span class="w">            </span><span class="p">;;</span>
+<span class="w">        </span>*<span class="o">)</span>
+<span class="w">            </span><span class="k">break</span>
+<span class="w">            </span><span class="p">;;</span>
+<span class="w">    </span><span class="k">esac</span>
+<span class="k">done</span>
+
+
+
+<span class="nv">release</span><span class="o">=</span><span class="s2">&quot;</span><span class="nv">$1</span><span class="s2">&quot;</span>
+<span class="nv">target</span><span class="o">=</span><span class="s2">&quot;</span><span class="nv">$2</span><span class="s2">&quot;</span>
+
+<span class="k">if</span><span class="w"> </span><span class="o">[</span><span class="w"> </span>-z<span class="w"> </span><span class="s2">&quot;</span><span class="nv">$1</span><span class="s2">&quot;</span><span class="w"> </span><span class="o">]</span><span class="w"> </span><span class="o">||</span><span class="w"> </span><span class="o">[</span><span class="w"> </span>-z<span class="w"> </span><span class="s2">&quot;</span><span class="nv">$2</span><span class="s2">&quot;</span><span class="w"> </span><span class="o">]</span><span class="p">;</span><span class="w"> </span><span class="k">then</span>
+<span class="w">    </span><span class="nb">echo</span><span class="w"> </span><span class="s2">&quot;You must specify suite and target&quot;</span>
+<span class="w">    </span><span class="nb">exit</span><span class="w"> </span><span class="m">1</span>
+<span class="k">fi</span>
+
+<span class="k">if</span><span class="w"> </span><span class="o">[</span><span class="w"> </span>-n<span class="w"> </span><span class="s2">&quot;</span><span class="nv">$3</span><span class="s2">&quot;</span><span class="w"> </span><span class="o">]</span><span class="p">;</span><span class="w"> </span><span class="k">then</span>
+<span class="w">    </span><span class="nv">MIRROR</span><span class="o">=</span><span class="s2">&quot;</span><span class="nv">$3</span><span class="s2">&quot;</span>
+<span class="k">fi</span>
+
+<span class="nv">MIRROR</span><span class="o">=</span><span class="si">${</span><span class="nv">MIRROR</span><span class="k">:-</span><span class="nv">http</span><span class="p">://httpredir.debian.org/debian</span><span class="si">}</span>
+
+<span class="nb">echo</span><span class="w"> </span><span class="s2">&quot;Downloading Debian </span><span class="nv">$release</span><span class="s2"> ...&quot;</span>
+debootstrap<span class="w"> </span>--verbose<span class="w"> </span>--variant<span class="o">=</span>minbase<span class="w"> </span>--arch<span class="o">=</span><span class="nv">$ARCHITECTURE</span><span class="w"> </span><span class="se">\</span>
+<span class="w">             </span>--include<span class="o">=</span><span class="nv">$packages</span><span class="w"> </span><span class="se">\</span>
+<span class="w">             </span><span class="s2">&quot;</span><span class="nv">$release</span><span class="s2">&quot;</span><span class="w"> </span><span class="s2">&quot;</span><span class="nv">$target</span><span class="s2">&quot;</span><span class="w"> </span><span class="s2">&quot;</span><span class="nv">$MIRROR</span><span class="s2">&quot;</span>
+
+<span class="k">if</span><span class="w"> </span><span class="o">[</span><span class="w"> </span>-n<span class="w"> </span><span class="s2">&quot;</span><span class="nv">$ROOT_PASSWD</span><span class="s2">&quot;</span><span class="w"> </span><span class="o">]</span><span class="p">;</span><span class="w"> </span><span class="k">then</span>
+<span class="w">    </span><span class="nb">echo</span><span class="w"> </span><span class="s2">&quot;root:</span><span class="nv">$ROOT_PASSWD</span><span class="s2">&quot;</span><span class="w"> </span><span class="p">|</span><span class="w"> </span>chroot<span class="w"> </span><span class="s2">&quot;</span><span class="nv">$target</span><span class="s2">&quot;</span><span class="w"> </span>chpasswd
+<span class="w">    </span><span class="nb">echo</span><span class="w"> </span><span class="s2">&quot;Root password is &#39;</span><span class="nv">$ROOT_PASSWRD</span><span class="s2">&#39;, please change!&quot;</span>
+<span class="k">fi</span>
+</pre></div><p>It just gets my needs done, if you don't like it feel free to modify or use debootstrap directly.</p><p><strong>!NB Please install dbus package in the minimal base install, otherwise you will not be able to control the container using machinectl</strong></p></div><div class="section" id="manually-running-container-and-then-persisting-it"><h2>Manually Running Container and then persisting it</h2><p>Next we need to run the container manually. This is done by using following command.</p><div class="highlight"><pre><span></span>systemd-nspawn<span class="w"> </span>-bD<span class="w">   </span>/path/to/container<span class="w"> </span>--network-veth<span class="w"> </span><span class="se">\</span>
+<span class="w">     </span>--network-bridge<span class="o">=</span>natbr0<span class="w"> </span>--machine<span class="o">=</span>Machinename
+</pre></div><p><em>--machine</em> option is not mandatory, if not specified systemd-nspawn will take the directory name as machine name, and if you have characters like - in the directory name it translates to hexcode x2d and controlling container with name becomes difficult.</p><p><em>--network-veth</em> specifies the systemd-nspawn to enable virtual ethernet based networking and <em>--network-bridge</em> tells the bridge interface on host system to be used by systemd-nspawn. These options together constitutes <em>private networking</em> for container. If not specified container can use host systems interface there by removing network isolation of container.</p><p>Once you run this command container comes up. You can now run machinectl to control the container. Container can be persisted using following command</p><div class="highlight"><pre><span></span>machinectl<span class="w"> </span><span class="nb">enable</span><span class="w"> </span>container-name
+</pre></div><p>This will create a symbolic link of <em>/lib/systemd/system/systemd-nspawn&#64;service</em> to <em>/etc/systemd/system/machine.target.wants/</em>. This allows you to start or stop container using <em>machinectl</em> or <em>systemctl</em> command. Only catch here is your base install should be in <em>/var/lib/machines/</em>. What I do in my case is create a symbolic link from my base container to <em>/var/lib/machines/container-name</em>.</p><p><strong>!NB Note that symbolic link name under /var/lib/machines should be same as the container name you gave using --machine switch or the directory name if you didn't specify --machine</strong></p></div><div class="section" id="persisting-container-networking"><h2>Persisting Container Networking</h2><p>We did persist the container in above step, but this doesn't persist the networking options we provided in command line. systemd-nspawn&#64;.service provides following command to invoke container.</p><div class="highlight"><pre><span></span><span class="na">ExecStart</span><span class="o">=</span><span class="s">/usr/bin/systemd-nspawn --quiet --keep-unit --boot --link-journal=try-guest --network-veth --settings=override --machine=%I</span>
+</pre></div><p>To persist the bridge networking configuration we did in command line, we need the help of systemd-networkd. So first we need to enable the systemd-networkd.service on both container and the host system.</p><div class="highlight"><pre><span></span>systemctl<span class="w"> </span><span class="nb">enable</span><span class="w"> </span>systemd-networkd.service
+</pre></div><p>Now inside the container, interfaces will be named as <em>hostN</em>. Depending on how many interfaces we have N increments. In our example case we had single interface, hence it will named as <em>host0</em>. By default network interfaces will be down inside container, hence systemd-networkd is needed to put it up.</p><p>We put the following in /etc/systemd/network/host0.network file inside the container.</p><div class="highlight"><pre><span></span><span class="k">[Match]</span>
+<span class="na">Name</span><span class="o">=</span><span class="s">host0</span>
+
+<span class="k">[Network]</span>
+<span class="na">Description</span><span class="o">=</span><span class="s">Container wired interface host0</span>
+<span class="na">DHCP</span><span class="o">=</span><span class="s">yes</span>
+</pre></div><p>And in the host system we just configure the bridge interface using systemd-nspawn. I put following in <em>natbr0.netdev</em> in /etc/systemd/network/</p><div class="highlight"><pre><span></span><span class="k">[NetDev]</span>
+<span class="na">Description</span><span class="o">=</span><span class="s">Bridge natbr0</span>
+<span class="na">Name</span><span class="o">=</span><span class="s">natbr0</span>
+<span class="na">Kind</span><span class="o">=</span><span class="s">bridge</span>
+</pre></div><p>In my case I already had configured the bridge using <em>/etc/network/interfaces</em> file for lxc. I think its not really needed to use systemd-networkd in this case. Since systemd-networkd doesn't do anything if network / virtual device is already present I safely put above configuration and enabled systemd-networkd.</p><p>Just for the notes here is my natbr0 configuration in <em>interfaces</em> file.</p><div class="highlight"><pre><span></span>auto natbr0
+iface natbr0 inet static
+   address 172.16.10.1
+   netmask 255.255.255.0
+   pre-up brctl addbr natbr0
+   post-down brctl delbr natbr0
+   post-down sysctl net.ipv4.ip_forward=0
+   post-down sysctl net.ipv6.conf.all.forwarding=0
+   post-up sysctl net.ipv4.ip_forward=1
+   post-up sysctl net.ipv6.conf.all.forwarding=1
+   post-up iptables -A POSTROUTING -t mangle -p udp --dport bootpc -s 172.16.0.0/16 -j CHECKSUM --checksum-fill
+   pre-down iptables -D POSTROUTING -t mangle -p udp --dport bootpc -s 172.16.0.0/16 -j CHECKSUM --checksum-fill
+</pre></div><p>Once this is done just reload the <em>systemd-networkd</em> and make sure you have dnsmasq or any other DHCP server running in your system.</p><p>Now the last part is to tell systemd-nspawn to use the bridge networking interface we have defined. This is done using <em>container-name.nspawn</em> file. Put this file under <em>/etc/systemd/nspawn</em> folder.</p><div class="highlight"><pre><span></span><span class="k">[Exec]</span>
+<span class="na">Boot</span><span class="o">=</span><span class="s">on</span>
+
+<span class="k">[Files]</span>
+<span class="na">Bind</span><span class="o">=</span><span class="s">/home/vasudev/Documents/Python/upstream/apt-offline/</span>
+
+<span class="k">[Network]</span>
+<span class="na">VirtualEthernet</span><span class="o">=</span><span class="s">yes</span>
+<span class="na">Bridge</span><span class="o">=</span><span class="s">natbr0</span>
+</pre></div><p>Here you can specify networking, and files mounting section of the container. For full list please refer the <em>systemd.nspawn</em> manual page.</p><p>Now all this is done you can happily do</p><div class="highlight"><pre><span></span>machinectl<span class="w"> </span>start<span class="w"> </span>container-name
+<span class="c1">#or</span>
+systemctl<span class="w"> </span>start<span class="w"> </span>systemd-nspawn@container-name
+</pre></div></div><div class="section" id="resource-control"><h2>Resource Control</h2><p>Now all things said and done, one last part remains. Yes what is the point if we can't control how much resource does the container use. Atleast it is more important for me, because I use old and bit low powered laptop.</p><p>Systemd provides way to control the resource using Control interface. To see all the the interfaces exposed by systemd please refer <em>systemd.resource-control</em> manual page.</p><p>The way to control the resource is using <em>systemctl</em>. Once container starts running we can run following command.</p><div class="highlight"><pre><span></span>systemctl<span class="w"> </span>set-property<span class="w"> </span>container-name<span class="w"> </span><span class="nv">CPUShares</span><span class="o">=</span><span class="m">200</span><span class="w"> </span><span class="nv">CPUQuota</span><span class="o">=</span><span class="m">30</span>%<span class="w"> </span><span class="nv">MemoryLimit</span><span class="o">=</span>500M
+</pre></div><p>The manual page does say that these things can be put under [Slice] section of unit files. Now I don't have clear idea if this can be put under .nspawn files or not. For the sake of persisting the container I manually wrote the service file for container by copying systemd-nspawn&#64;.service and adding [Slice] section. But if I don't know how to find out if this had any effect or not.</p><p>If some one knows about this please share your suggestions to me and I will update this section with your provided information.</p></div><div class="section" id="conclusion"><h2>Conclusion</h2><p>All in all I like systemd-nspawn a lot. I use it to run container for development of <em>apt-offline</em>. I previously used lxc where all can be controlled using a single config file. But I feel systemd-nspawn is more tightly integrated with system than lxc.</p><p>There is definitely more in systemd-nspawn than I've currently figured out. Only thing is its not as popular as other alternatives and definitely lacks good howto documentation.For now only way out is dig the manual pages, scratch your head, pull your hair out and figure out new possibilities in systemd-nspawn. ;-)</p></div></div><div id="footer"><p><italic>Tagged as: containers, debian, systemd-nspawn, </italic></p></section></div><hr><div id="footer"> Site Proudly powered by <a href="http://getpelican.com/">Pelican</a></div></body></html>
