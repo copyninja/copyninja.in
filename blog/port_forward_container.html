@@ -1,4 +1,51 @@
-<!DOCTYPE html><html lang="en"><head><link href="https://fonts.googleapis.com/css?family=Cantarell" rel="stylesheet"><title>Forwarding host port to service in container</title><meta http-equiv="Content-Type" content="text/html; charset=UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1"><link href="https://copyninja.in/feeds/all.atom.xml" type="application/atom+xml" rel="alternate" title="Random Ramblings Full Atom Feed"><link href="https://copyninja.in/feeds/{slug}.atom.xml" type="application/atom+xml" rel="alternate" title="Random Ramblings Categories Atom Feed"><link rel="stylesheet" type="text/css" href="/theme/css/pygments.css"><link rel="stylesheet" type="text/css" href="/theme/css/default.css"><meta name="tags" content="iptables"><meta name="tags" content="firewall"><meta name="tags" content="container"></head><body><div id="header" class="body"><div id="navigation"> | <a href="https://copyninja.in">Home</a> | | <a href="https://copyninja.in/about">About</a> | | <a href="https://copyninja.in/contact">Contact</a> | | <a href="https://copyninja.in/categories.html">Categories</a> | | <a href="https://copyninja.in/tags.html">Tags</a> | </div><h1><a href="https://copyninja.in/blog/port_forward_container.html">Forwarding host port to service in container</a></h1></div><div id="content"><section id="content" class="body"><footer class="post-info"><p> Posted on Nov 09, 2015 By copyninja under devops </p></abbr></footer><div class="entry-content"><div class="section" id="problem"><h2>Problem</h2><p>I've lxc container running distcc daemon and I would like to forward the distcc traffic coming to my host system to container.</p></div><div class="section" id="solution"><h2>Solution</h2><p>Following simple script which uses iptable did the job.</p><div class="highlight"><pre><span></span><span class="w"> </span><span class="c1">#!/bin/sh</span>
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+          <link href="https://fonts.googleapis.com/css?family=Cantarell" rel="stylesheet">
+        <title> Forwarding host port to service in container </title>
+        <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1"/>
+        <link href="https://copyninja.in/feeds/all.atom.xml" type="application/atom+xml" rel="alternate" title="Random Ramblings Full Atom Feed" />
+        <link href="https://copyninja.in/feeds/{slug}.atom.xml" type="application/atom+xml" rel="alternate" title="Random Ramblings Categories Atom Feed" />
+        <link rel="stylesheet" type="text/css" href="/theme/css/pygments.css"/>
+        <link rel="stylesheet" type="text/css" href="/theme/css/default.css"/>
+
+
+
+    <meta name="tags" content="iptables" />
+    <meta name="tags" content="firewall" />
+    <meta name="tags" content="container" />
+</head>
+
+<body>
+    <div id="header" class="body">
+        <div id="navigation">
+ | <a href="https://copyninja.in">Home</a> |           | <a href="https://copyninja.in/about">About</a> |
+          | <a href="https://copyninja.in/contact">Contact</a> |
+          | <a href="https://copyninja.in/categories.html">Categories</a> |
+          | <a href="https://copyninja.in/tags.html">Tags</a> |
+      </div>
+<h1><a href="https://copyninja.in/blog/port_forward_container.html">Forwarding host port to service in container</a></h1>
+  </div>
+  <div id="content">
+<section id="content" class="body">
+  <footer class="post-info">
+     <p> Posted on Nov 09, 2015
+ By copyninja
+ under devops
+     </p>
+    </abbr>
+  </footer><!-- /.post-info -->
+  <div class="entry-content">
+    <div class="section" id="problem">
+<h2>Problem</h2>
+<p>I've lxc container running distcc daemon and I would like to forward
+the distcc traffic coming to my host system to container.</p>
+</div>
+<div class="section" id="solution">
+<h2>Solution</h2>
+<p>Following simple script which uses iptable did the job.</p>
+<div class="highlight"><pre><span></span><span class="w"> </span><span class="c1">#!/bin/sh</span>
 <span class="w"> </span><span class="nb">set</span><span class="w"> </span>-e
 
 
@@ -97,4 +144,29 @@ setup_portforwarding<span class="w"> </span><span class="o">()</span><span class
 <span class="w">    </span>setup_portforwarding<span class="w"> </span>tcp
 <span class="w">    </span>setup_portforwarding<span class="w"> </span>udp
 <span class="k">fi</span>
-</pre></div><p>Coming to systemd-nspawn I see there is <em>--port</em> option which takes argument in form <em>proto:hostport:destport</em> where proto can be either <em>tcp</em> or <em>udp</em>, <em>hostport</em> and <em>destport</em> are number from 1-65535. This option assumes private networking enabled in the container. I've not tried this option yet but that simplifies quite a lot of thing, its like -p switch used by <em>docker</em>.</p></div></div><div id="footer"><p><italic>Tagged as: container, firewall, iptables, </italic></p></section></div><hr><div id="footer"> Site Proudly powered by <a href="http://getpelican.com/">Pelican</a></div></body></html>
+</pre></div>
+<p>Coming to systemd-nspawn I see there is <em>--port</em> option which takes
+argument in form <em>proto:hostport:destport</em> where proto can be either
+<em>tcp</em> or <em>udp</em>, <em>hostport</em> and <em>destport</em> are number from
+1-65535. This option assumes private networking enabled in the
+container. I've not tried this option yet but that simplifies quite a
+lot of thing, its like -p switch used by <em>docker</em>.</p>
+</div>
+
+  </div><!-- /.entry-content -->
+  <div id="footer">
+    <p>
+      <italic>Tagged as:
+      container, 
+      firewall, 
+      iptables, 
+      </italic>
+    </p>
+</section>
+  </div>
+  <hr/>
+  <div id="footer">    
+    Site Proudly powered by <a href="http://getpelican.com/">Pelican</a>
+  </div>
+</body>
+</html>
