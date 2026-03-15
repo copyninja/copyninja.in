@@ -1,11 +1,14 @@
 <?xml version="1.0" encoding="utf-8"?>
 <feed xmlns="http://www.w3.org/2005/Atom"><title>Random Ramblings - devops</title><link href="https://copyninja.in/" rel="alternate"/><link href="https://copyninja.in/feeds/devops.atom.xml" rel="self"/><id>https://copyninja.in/</id><updated>2026-03-15T12:35:00+05:30</updated><subtitle>Random thoughts shooting out of volatile mind</subtitle><entry><title>Using Gemini CLI to Configure the Hyprland Window Manager</title><link href="https://copyninja.in/blog/agentic_hyprland_config.html" rel="alternate"/><published>2026-03-15T12:35:00+05:30</published><updated>2026-03-15T12:35:00+05:30</updated><author><name>copyninja</name></author><id>tag:copyninja.in,2026-03-15:/blog/agentic_hyprland_config.html</id><summary type="html">&lt;p class="first last"&gt;A guide on migrating to the Hyprland window manager using the Gemini
 CLI to automate configuration and reduce system bloat.&lt;/p&gt;
-</summary><content type="html">&lt;p&gt;What led to this experiment? Well, for one, there was this:&lt;/p&gt;
-&lt;blockquote class="twitter-tweet" data-dnt="true"&gt;
-  &lt;a href="[https://twitter.com/karpathy/status/2026731645169185220](https://twitter.com/karpathy/status/2026731645169185220)"&gt;&lt;/a&gt;
+</summary><content type="html">&lt;p&gt;What led to this experiment? Well, for one, Well, for one, there was a thought
+shared by Andrej Karpathy regarding the shift towards &amp;quot;Agentic&amp;quot; workflows.&lt;/p&gt;
+&lt;blockquote class="epigraph"&gt;
+&lt;p&gt;&amp;quot;The future of software is not just 'tools', but 'agents' that can navigate
+complex tasks on your behalf.&amp;quot;&lt;/p&gt;
+&lt;p class="attribution"&gt;&amp;mdash;&lt;a class="reference external" href="https://twitter.com/karpathy/status/2026731645169185220"&gt;Andrej Karpathy&lt;/a&gt;&lt;/p&gt;
 &lt;/blockquote&gt;
-&lt;script async src="[https://platform.twitter.com/widgets.js](https://platform.twitter.com/widgets.js)" charset="utf-8"&gt;&lt;/script&gt;&lt;p&gt;Recently, I spoke with &lt;a class="reference external" href="https://researchut.com/"&gt;Ritesh&lt;/a&gt;, who mentioned his
+&lt;p&gt;Recently, I spoke with &lt;a class="reference external" href="https://researchut.com/"&gt;Ritesh&lt;/a&gt;, who mentioned his
 success using the Gemini CLI to debug an idle power drain issue on his laptop. I
 wanted to experiment with this myself, and I had the perfect use case:
 configuring the Hyprland Window Manager on my aging laptop.&lt;/p&gt;
