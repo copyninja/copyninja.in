@@ -1,5 +1,125 @@
 <?xml version="1.0" encoding="utf-8"?>
-<feed xmlns="http://www.w3.org/2005/Atom"><title>Random Ramblings - copyninja</title><link href="https://copyninja.in/" rel="alternate"/><link href="https://copyninja.in/feeds/copyninja.atom.xml" rel="self"/><id>https://copyninja.in/</id><updated>2026-02-21T17:13:00+05:30</updated><subtitle>Random thoughts shooting out of volatile mind</subtitle><entry><title>Learning Notes: Debsecan MCP Server</title><link href="https://copyninja.in/blog/debsecan-mcp.html" rel="alternate"/><published>2026-02-21T17:13:00+05:30</published><updated>2026-02-21T17:13:00+05:30</updated><author><name>copyninja</name></author><id>tag:copyninja.in,2026-02-21:/blog/debsecan-mcp.html</id><summary type="html">&lt;p class="first last"&gt;This post describes a new learning project: an MCP server inspired by
+<feed xmlns="http://www.w3.org/2005/Atom"><title>Random Ramblings - copyninja</title><link href="https://copyninja.in/" rel="alternate"/><link href="https://copyninja.in/feeds/copyninja.atom.xml" rel="self"/><id>https://copyninja.in/</id><updated>2026-03-15T12:35:00+05:30</updated><subtitle>Random thoughts shooting out of volatile mind</subtitle><entry><title>Using Gemini CLI to Configure the Hyprland Window Manager</title><link href="https://copyninja.in/blog/agentic_hyprland_config.html" rel="alternate"/><published>2026-03-15T12:35:00+05:30</published><updated>2026-03-15T12:35:00+05:30</updated><author><name>copyninja</name></author><id>tag:copyninja.in,2026-03-15:/blog/agentic_hyprland_config.html</id><summary type="html">&lt;p class="first last"&gt;A guide on migrating to the Hyprland window manager using the Gemini
+CLI to automate configuration and reduce system bloat.&lt;/p&gt;
+</summary><content type="html">&lt;p&gt;What led to this experiment? Well, for one, there was this:&lt;/p&gt;
+&lt;blockquote class="twitter-tweet" data-dnt="true"&gt;
+  &lt;a href="[https://twitter.com/karpathy/status/2026731645169185220](https://twitter.com/karpathy/status/2026731645169185220)"&gt;&lt;/a&gt;
+&lt;/blockquote&gt;
+&lt;script async src="[https://platform.twitter.com/widgets.js](https://platform.twitter.com/widgets.js)" charset="utf-8"&gt;&lt;/script&gt;&lt;p&gt;Recently, I spoke with &lt;a class="reference external" href="https://researchut.com/"&gt;Ritesh&lt;/a&gt;, who mentioned his
+success using the Gemini CLI to debug an idle power drain issue on his laptop. I
+wanted to experiment with this myself, and I had the perfect use case:
+configuring the Hyprland Window Manager on my aging laptop.&lt;/p&gt;
+&lt;p&gt;The machine is nearly eight years old with 12GB of RAM (upgraded from the
+original 4GB). I found that GNOME and KDE were becoming overkill, often leading
+to system freezes when running multiple AI-powered IDEs like Antigravity and VS
+Code with Co-pilot. Coincidentally, I noticed my Jio number had a &amp;quot;Google One
+2TB&amp;quot; and &amp;quot;Google AI Premium&amp;quot; plan available to claim. I claimed it, and now here
+I am, experimenting with the Gemini CLI.&lt;/p&gt;
+&lt;div class="section" id="getting-started"&gt;
+&lt;h2&gt;Getting Started&lt;/h2&gt;
+&lt;p&gt;First, you need to install &lt;tt class="docutils literal"&gt;geminicli&lt;/tt&gt;. It is an open-source project, and
+currently, the easiest way to install it is via the Node Package Manager (npm):&lt;/p&gt;
+&lt;pre class="code sh literal-block"&gt;
+npm&lt;span class="w"&gt; &lt;/span&gt;install&lt;span class="w"&gt; &lt;/span&gt;-g&lt;span class="w"&gt; &lt;/span&gt;&amp;#64;google/gemini-cli
+&lt;/pre&gt;
+&lt;p&gt;Next, we need to create a context for Gemini—a set of instructions for it to
+follow throughout the project. This is managed via a &lt;tt class="docutils literal"&gt;GEMINI.md&lt;/tt&gt; file. I went
+to Google Gemini, explained my requirements, and asked it to generate one for
+me.&lt;/p&gt;
+&lt;p&gt;&lt;strong&gt;My requirements were:&lt;/strong&gt;&lt;/p&gt;
+&lt;ol class="arabic simple"&gt;
+&lt;li&gt;A minimalist but fully functional session, comparable to my existing GNOME
+setup.&lt;/li&gt;
+&lt;li&gt;Basic functionalities including wallpaper, screen locks, and a status bar
+with system icons.&lt;/li&gt;
+&lt;li&gt;Swapping Control and Caps Lock (a must for Emacs users).&lt;/li&gt;
+&lt;li&gt;Mandatory permission prompts for privileged operations; otherwise, it can
+work freely within a specified directory.&lt;/li&gt;
+&lt;li&gt;Persistent memory/artifacts for the session.&lt;/li&gt;
+&lt;li&gt;Permission to inspect my current session to understand the existing hardware
+and software configuration.&lt;/li&gt;
+&lt;/ol&gt;
+&lt;p&gt;The goal was to reduce bloat and reclaim memory for heavy applications like
+Antigravity and VS Code. Gemini provided the following &lt;tt class="docutils literal"&gt;GEMINI.md&lt;/tt&gt; file:&lt;/p&gt;
+&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;&lt;span class="gh"&gt;# Role: Hyprland Configuration Specialist (Minimalist &amp;amp; High-Performance)&lt;/span&gt;
+
+You are a Linux Systems Engineer specializing in migrating users from heavy
+Desktop Environments to minimalist, tiling-based Wayland sessions on Debian.
+Your goal is to maximize available RAM for heavy applications while maintaining
+essential desktop features.
+
+&lt;span class="gu"&gt;## 1. Environment &amp;amp; Persona&lt;/span&gt;
+&lt;span class="k"&gt;-&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="gs"&gt;**Target OS:**&lt;/span&gt; Debian (Linux)
+&lt;span class="k"&gt;-&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="gs"&gt;**Target WM:**&lt;/span&gt; Hyprland
+&lt;span class="k"&gt;-&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="gs"&gt;**Hardware:**&lt;/span&gt; ThinkPad E470 (i5-7th Gen, 12GB RAM)
+&lt;span class="k"&gt;-&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="gs"&gt;**User Profile:**&lt;/span&gt; Emacs user, prioritizes &amp;quot;anti-gravity&amp;quot; (zero bloat).
+&lt;span class="k"&gt;-&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="gs"&gt;**Tone:**&lt;/span&gt; Technical, concise, and security-conscious.
+
+&lt;span class="gu"&gt;## 2. Core Functional Requirements&lt;/span&gt;
+&lt;span class="k"&gt;-&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="gs"&gt;**Status Bar:**&lt;/span&gt; &lt;span class="sb"&gt;`waybar`&lt;/span&gt; (with CPU, RAM, Network, and Battery icons).
+&lt;span class="k"&gt;-&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="gs"&gt;**Wallpaper:**&lt;/span&gt; &lt;span class="sb"&gt;`swww`&lt;/span&gt; or &lt;span class="sb"&gt;`hyprpaper`&lt;/span&gt;.
+&lt;span class="k"&gt;-&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="gs"&gt;**Screen Lock:**&lt;/span&gt; &lt;span class="sb"&gt;`hyprlock`&lt;/span&gt; + &lt;span class="sb"&gt;`hypridle`&lt;/span&gt;.
+&lt;span class="k"&gt;-&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="gs"&gt;**Input Mapping:**&lt;/span&gt; Swap Control and Caps Lock (&lt;span class="sb"&gt;`kb_options = ctrl:nocaps`&lt;/span&gt;).
+
+&lt;span class="gu"&gt;## 3. Operational Constraints&lt;/span&gt;
+&lt;span class="k"&gt;-&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="gs"&gt;**Permission First:**&lt;/span&gt; Ask before using &lt;span class="sb"&gt;`sudo`&lt;/span&gt; or writing outside the work directory.
+&lt;span class="k"&gt;-&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="gs"&gt;**Inspection:**&lt;/span&gt; Use &lt;span class="sb"&gt;`hyprctl`&lt;/span&gt;, &lt;span class="sb"&gt;`lsmod`&lt;/span&gt;, or &lt;span class="sb"&gt;`gsettings`&lt;/span&gt; for compatibility checks.
+&lt;span class="k"&gt;-&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="gs"&gt;**Artifact Management:**&lt;/span&gt; Update &lt;span class="sb"&gt;`MEMORY.md`&lt;/span&gt; after every major step.
+&lt;/pre&gt;&lt;/div&gt;
+&lt;p&gt;Gemini also recommended creating a &lt;tt class="docutils literal"&gt;MEMORY.md&lt;/tt&gt; file to track progress.
+Interestingly, Gemini remembered that I had previously shared &lt;tt class="docutils literal"&gt;dmidecode&lt;/tt&gt;
+output, so it already knew my exact laptop specs. (Though it did include a note
+about me being a &amp;quot;daily rice eater&amp;quot;—I assume it meant Linux 'ricing,' though I
+actually use Debian Unstable, not Stable!).&lt;/p&gt;
+&lt;p&gt;The AI suggested starting with this prompt:&lt;/p&gt;
+&lt;blockquote&gt;
+Read MEMORY.md and GEMINI.md. Based on my hardware, give me a shell script to
+inspect my current GNOME environment so we can start replicating the session
+basics.&lt;/blockquote&gt;
+&lt;/div&gt;
+&lt;div class="section" id="how-did-it-go"&gt;
+&lt;h2&gt;How Did It Go?&lt;/h2&gt;
+&lt;p&gt;I initialized a git repository for these files and instructed the Gemini CLI to
+update &lt;tt class="docutils literal"&gt;GEMINI.md&lt;/tt&gt; and commit changes after every major step so I could track
+the progress.&lt;/p&gt;
+&lt;p&gt;The workflow looked like this:&lt;/p&gt;
+&lt;ol class="arabic simple"&gt;
+&lt;li&gt;&lt;strong&gt;Inspection:&lt;/strong&gt; It created a &lt;a class="reference external" href="https://github.com/copyninja/hyprland-config/blob/main/inspect_gnome.sh"&gt;script&lt;/a&gt;
+to extract my GNOME settings.&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;Configuration:&lt;/strong&gt; Once I provided the output, it began configuring Hyprland.&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;Utilities:&lt;/strong&gt; It generated an &lt;a class="reference external" href="https://github.com/copyninja/hyprland-config/blob/main/install_utils.sh"&gt;installation script&lt;/a&gt;
+for all required Wayland utilities.&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;Validation:&lt;/strong&gt; All changes were staged in a &lt;tt class="docutils literal"&gt;&lt;span class="pre"&gt;hypr-config-draft&lt;/span&gt;&lt;/tt&gt; folder. I
+had Gemini verify them using &lt;tt class="docutils literal"&gt;hyprland &lt;span class="pre"&gt;--verify-config&lt;/span&gt;&lt;/tt&gt; before moving them
+to &lt;tt class="docutils literal"&gt;&lt;span class="pre"&gt;~/.config/hypr&lt;/span&gt;&lt;/tt&gt;.&lt;/li&gt;
+&lt;/ol&gt;
+&lt;p&gt;Most things worked immediately, but I hit a snag with the wallpaper. Even after
+generating the config, &lt;tt class="docutils literal"&gt;hyprpaper&lt;/tt&gt; failed to display anything. The AI got
+stuck in a loop trying to debug it. I eventually spawned a second Gemini CLI
+instance to review the code and logs.&lt;/p&gt;
+&lt;p&gt;The debug log showed: &lt;tt class="docutils literal"&gt;'DEBUG ]: Monitor &lt;span class="pre"&gt;eDP-1&lt;/span&gt; has no target: no wp will be
+created'&lt;/tt&gt;.
+It turns out the configuration format was outdated. By feeding the &lt;a class="reference external" href="https://wiki.hypr.land/Hypr-Ecosystem/hyprpaper/"&gt;Hyprpaper
+Wiki&lt;/a&gt; into the AI, it
+finally corrected the config, and the wallpaper appeared.&lt;/p&gt;
+&lt;p&gt;After that, it successfully fixed an &lt;tt class="docutils literal"&gt;&lt;span class="pre"&gt;ssh-agent&lt;/span&gt;&lt;/tt&gt; issue and configured a
+clipboard manager with custom keybindings.&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class="section" id="learnings"&gt;
+&lt;h2&gt;Learnings&lt;/h2&gt;
+&lt;p&gt;I have used window managers for a long time because my hardware was rarely
+top-of-the-line. However, I had moved back to KDE/GNOME with the arrival of
+Wayland because most of my preferred WMs were X11-based.&lt;/p&gt;
+&lt;p&gt;Manually configuring a window manager is a painful, time-consuming process
+involving endless wiki-trawling and trial-and-error. What usually takes weeks
+took only a few hours with the Gemini CLI.&lt;/p&gt;
+&lt;p&gt;AI isn't perfect—I still had to step in and guide it when it hit a wall—but the
+efficiency gain is undeniable. If you're interested in the configuration or the
+history of the session, you can find the repository &lt;a class="reference external" href="https://github.com/copyninja/hyprland-config"&gt;here&lt;/a&gt;.&lt;/p&gt;
+&lt;p&gt;I still have a few pending items in &lt;tt class="docutils literal"&gt;MEMORY.md&lt;/tt&gt;, but I'll tackle those next
+time!&lt;/p&gt;
+&lt;/div&gt;
+</content><category term="devops"/><category term="gemini cli"/><category term="agentic workflows"/><category term="hyprland"/></entry><entry><title>Learning Notes: Debsecan MCP Server</title><link href="https://copyninja.in/blog/debsecan-mcp.html" rel="alternate"/><published>2026-02-21T17:13:00+05:30</published><updated>2026-02-21T17:13:00+05:30</updated><author><name>copyninja</name></author><id>tag:copyninja.in,2026-02-21:/blog/debsecan-mcp.html</id><summary type="html">&lt;p class="first last"&gt;This post describes a new learning project: an MCP server inspired by
 debsecan.&lt;/p&gt;
 </summary><content type="html">&lt;p&gt;Since Generative AI is currently the most popular topic, I wanted to get my
 hands dirty and learn something new. I was learning about the Model Context
