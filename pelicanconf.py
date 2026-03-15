@@ -13,7 +13,7 @@ TIMEZONE = "Asia/Calcutta"
 DEFAULT_LANG = "en"
 
 # Theme
-THEME = os.path.join(os.environ.get("HOME"), "Public/pelican-simple/")
+THEME = os.path.join(os.environ.get("HOME"), "Public/blog/pelican-simple/")
 
 
 # Feed generation is usually not desired when developing
@@ -61,7 +61,7 @@ STATIC_PATHS = [
 ]
 
 PLUGIN_PATHS = ["../pelican-plugins"]
-PLUGINS = ["pelican_youtube", "minification", "render_math"]
+PLUGINS = ["pelican_youtube", "minify", "render_math"]
 
 # URL generation
 ARTICLE_URL = "blog/{slug}.html"
