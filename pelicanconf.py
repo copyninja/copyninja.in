@@ -8,13 +8,14 @@ SITENAME = "Random Ramblings"
 SITESUBTITLE = "Random thoughts shooting out of volatile mind"
 SITEURL = "http://localhost:8000"
 
-TIMEZONE = "Asia/Calcutta"
+TIMEZONE = "Asia/Kolkata"
 
 DEFAULT_LANG = "en"
 
 # Theme
 THEME = os.path.join(os.environ.get("HOME"), "Public/blog/pelican-simple/")
 
+TYPOGRAPHY = True
 
 # Feed generation is usually not desired when developing
 FEED_ALL_ATOM = None
