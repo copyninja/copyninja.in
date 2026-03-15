@@ -8,14 +8,15 @@ Using Gemini CLI to Configure the Hyprland Window Manager
 :summary: A guide on migrating to the Hyprland window manager using the Gemini
           CLI to automate configuration and reduce system bloat.
 
-What led to this experiment? Well, for one, there was this:
+What led to this experiment? Well, for one, Well, for one, there was a thought
+shared by Andrej Karpathy regarding the shift towards "Agentic" workflows.
 
-.. raw:: html
+.. epigraph::
 
-   <blockquote class="twitter-tweet" data-dnt="true">
-     <a href="[https://twitter.com/karpathy/status/2026731645169185220](https://twitter.com/karpathy/status/2026731645169185220)"></a>
-   </blockquote>
-   <script async src="[https://platform.twitter.com/widgets.js](https://platform.twitter.com/widgets.js)" charset="utf-8"></script>
+   "The future of software is not just 'tools', but 'agents' that can navigate
+   complex tasks on your behalf."
+
+   -- `Andrej Karpathy <https://twitter.com/karpathy/status/2026731645169185220>`_
 
 Recently, I spoke with `Ritesh <https://researchut.com/>`_, who mentioned his
 success using the Gemini CLI to debug an idle power drain issue on his laptop. I
