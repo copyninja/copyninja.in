@@ -5,7 +5,6 @@ Using Gemini CLI to Configure the Hyprland Window Manager
 :slug: agentic_hyprland_config
 :tags: gemini cli, agentic workflows, hyprland
 :author: copyninja
-:status: draft
 :summary: A guide on migrating to the Hyprland window manager using the Gemini
           CLI to automate configuration and reduce system bloat.
 
