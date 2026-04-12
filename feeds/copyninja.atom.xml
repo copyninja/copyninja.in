@@ -1,5 +1,92 @@
 <?xml version="1.0" encoding="utf-8"?>
-<feed xmlns="http://www.w3.org/2005/Atom"><title>Random Ramblings - copyninja</title><link href="https://copyninja.in/" rel="alternate"/><link href="https://copyninja.in/feeds/copyninja.atom.xml" rel="self"/><id>https://copyninja.in/</id><updated>2026-03-15T12:35:00+05:30</updated><subtitle>Random thoughts shooting out of volatile mind</subtitle><entry><title>Using Gemini CLI to Configure the Hyprland Window Manager</title><link href="https://copyninja.in/blog/agentic_hyprland_config.html" rel="alternate"/><published>2026-03-15T12:35:00+05:30</published><updated>2026-03-15T12:35:00+05:30</updated><author><name>copyninja</name></author><id>tag:copyninja.in,2026-03-15:/blog/agentic_hyprland_config.html</id><summary type="html">&lt;p class="first last"&gt;A guide on migrating to the Hyprland window manager using the Gemini
+<feed xmlns="http://www.w3.org/2005/Atom"><title>Random Ramblings - copyninja</title><link href="https://copyninja.in/" rel="alternate"/><link href="https://copyninja.in/feeds/copyninja.atom.xml" rel="self"/><id>https://copyninja.in/</id><updated>2026-04-12T12:53:00+05:30</updated><subtitle>Random thoughts shooting out of volatile mind</subtitle><entry><title>Hardening the Unpacakgeable: A systemd-run Sandbox for Third-Party Binaries</title><link href="https://copyninja.in/blog/safe-run-binary-sandbox.html" rel="alternate"/><published>2026-04-12T12:53:00+05:30</published><updated>2026-04-12T12:53:00+05:30</updated><author><name>copyninja</name></author><id>tag:copyninja.in,2026-04-12:/blog/safe-run-binary-sandbox.html</id><summary type="html">&lt;p class="first last"&gt;A technical deep-dive into sandboxing untrusted npm and Python
+binaries using systemd-run and Linux namespaces.&lt;/p&gt;
+</summary><content type="html">&lt;div class="section" id="the-shift-in-software-consumption"&gt;
+&lt;h2&gt;The Shift in Software Consumption&lt;/h2&gt;
+&lt;p&gt;Historically, I have been a &amp;quot;distribution-first&amp;quot; user. Sticking to tools
+packaged within the Debian archives provides a layer of trust; maintainers
+validate licenses, audit code, and ensure the entire dependency chain is
+verified. However, the rapid pace of development in the Generative AI
+space—specifically with new tools like Gemini-CLI—has made this traditional
+approach difficult to sustain.&lt;/p&gt;
+&lt;p&gt;Many modern CLI tools are built within the &lt;strong&gt;npm&lt;/strong&gt; or &lt;strong&gt;Python&lt;/strong&gt; ecosystems. For
+a distribution packager, these are a nightmare; packaging a single tool often
+requires packaging a massive, shifting dependency chain. Consequently, I found
+myself forced to use third-party binaries, bypassing the safety of the Debian
+archive.&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class="section" id="the-supply-chain-risk"&gt;
+&lt;h2&gt;The Supply Chain Risk&lt;/h2&gt;
+&lt;p&gt;Recent supply chain attacks affecting widely used packages like &lt;tt class="docutils literal"&gt;axios&lt;/tt&gt; and
+&lt;tt class="docutils literal"&gt;LiteLLM&lt;/tt&gt; have made it clear: running unvetted binaries on a personal system
+is a significant risk. These scripts often have full access to your &lt;tt class="docutils literal"&gt;$HOME&lt;/tt&gt;
+directory, SSH keys, and the system D-Bus.&lt;/p&gt;
+&lt;p&gt;After discussing these concerns with a colleague, I was inspired by his
+approach—using a Flatpak-style sandbox for even basic applications like Google
+Chrome. I decided to build a generalized version of this using &lt;strong&gt;OpenCode&lt;/strong&gt; and
+&lt;strong&gt;Qwen 3.6 Fast&lt;/strong&gt; (which was available for free use at the time) to create a
+robust, transient sandbox utility.&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class="section" id="the-solution-safe-run-binary"&gt;
+&lt;h2&gt;The Solution: safe-run-binary&lt;/h2&gt;
+&lt;p&gt;My script, &lt;a class="reference external" href="https://github.com/copyninja/dotfiles/blob/master/bin/safe-run-binary"&gt;safe-run-binary&lt;/a&gt;,
+leverages &lt;tt class="docutils literal"&gt;&lt;span class="pre"&gt;systemd-run&lt;/span&gt;&lt;/tt&gt; to execute binaries within an isolated scope. It
+implements strict filesystem masking and resource control to ensure that even if
+a dependency is compromised, the &amp;quot;blast radius&amp;quot; is contained.&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class="section" id="key-technical-features"&gt;
+&lt;h2&gt;Key Technical Features&lt;/h2&gt;
+&lt;dl class="docutils"&gt;
+&lt;dt&gt;&lt;strong&gt;1. Virtualized Home Directory (tmpfs)&lt;/strong&gt;&lt;/dt&gt;
+&lt;dd&gt;Instead of exposing my real home directory, the script mounts a &lt;tt class="docutils literal"&gt;tmpfs&lt;/tt&gt;
+over &lt;tt class="docutils literal"&gt;$HOME&lt;/tt&gt;. It then selectively creates and bind-mounts only the
+necessary subdirectories (like &lt;tt class="docutils literal"&gt;.cache&lt;/tt&gt; or &lt;tt class="docutils literal"&gt;.config&lt;/tt&gt;) into a virtual
+structure. This prevents the application from ever &amp;quot;seeing&amp;quot; sensitive files
+like &lt;tt class="docutils literal"&gt;&lt;span class="pre"&gt;~/.ssh&lt;/span&gt;&lt;/tt&gt; or &lt;tt class="docutils literal"&gt;&lt;span class="pre"&gt;~/.gnupg&lt;/span&gt;&lt;/tt&gt;.&lt;/dd&gt;
+&lt;dt&gt;&lt;strong&gt;2. D-Bus Isolation via xdg-dbus-proxy&lt;/strong&gt;&lt;/dt&gt;
+&lt;dd&gt;For GUI applications, providing raw access to the D-Bus is a security hole.
+The script uses &lt;tt class="docutils literal"&gt;&lt;span class="pre"&gt;xdg-dbus-proxy&lt;/span&gt;&lt;/tt&gt; to sit between the application and the
+system bus. By using the &lt;tt class="docutils literal"&gt;&lt;span class="pre"&gt;--filter&lt;/span&gt;&lt;/tt&gt; and &lt;tt class="docutils literal"&gt;&lt;span class="pre"&gt;--talk=org.freedesktop.portal.*&lt;/span&gt;&lt;/tt&gt;
+flags, the app can only communicate with necessary portals (like the file
+picker) rather than sniffing the entire bus.&lt;/dd&gt;
+&lt;dt&gt;&lt;strong&gt;3. Linux Namespace Restrictions&lt;/strong&gt;&lt;/dt&gt;
+&lt;dd&gt;&lt;p class="first"&gt;The sandbox utilizes several &lt;tt class="docutils literal"&gt;systemd&lt;/tt&gt; execution properties to harden the
+process:&lt;/p&gt;
+&lt;ul class="last simple"&gt;
+&lt;li&gt;&lt;tt class="docutils literal"&gt;RestrictNamespaces=yes&lt;/tt&gt;: For CLI tools, this prevents the app from
+creating its own nested namespaces.&lt;/li&gt;
+&lt;li&gt;&lt;tt class="docutils literal"&gt;PrivateTmp=yes&lt;/tt&gt;: Ensures a private &lt;tt class="docutils literal"&gt;/tmp&lt;/tt&gt; space that isn't shared with
+the host.&lt;/li&gt;
+&lt;li&gt;&lt;tt class="docutils literal"&gt;NoNewPrivileges=yes&lt;/tt&gt;: Prevents the binary from gaining elevated
+permissions through SUID/SGID bits.&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/dd&gt;
+&lt;dt&gt;&lt;strong&gt;4. GPU and Audio Passthrough&lt;/strong&gt;&lt;/dt&gt;
+&lt;dd&gt;The script intelligently detects and binds Wayland, PipeWire, and NVIDIA/DRI
+device nodes. This allows browsers like Firefox to run with full hardware
+acceleration and audio support while remaining locked out of the rest of the
+filesystem.&lt;/dd&gt;
+&lt;/dl&gt;
+&lt;/div&gt;
+&lt;div class="section" id="usage"&gt;
+&lt;h2&gt;Usage&lt;/h2&gt;
+&lt;p&gt;To run a CLI tool like Gemini-CLI with access only to a specific directory:&lt;/p&gt;
+&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;safe-run-binary&lt;span class="w"&gt; &lt;/span&gt;-b&lt;span class="w"&gt; &lt;/span&gt;~/.gemini-config&lt;span class="w"&gt; &lt;/span&gt;--&lt;span class="w"&gt; &lt;/span&gt;npx&lt;span class="w"&gt; &lt;/span&gt;@google/gemini-cli
+&lt;/pre&gt;&lt;/div&gt;
+&lt;p&gt;For a GUI application like Firefox:&lt;/p&gt;
+&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;safe-run-binary&lt;span class="w"&gt; &lt;/span&gt;--gui&lt;span class="w"&gt; &lt;/span&gt;-b&lt;span class="w"&gt; &lt;/span&gt;~/.mozilla&lt;span class="w"&gt; &lt;/span&gt;-b&lt;span class="w"&gt; &lt;/span&gt;~/.cache/mozilla&lt;span class="w"&gt; &lt;/span&gt;-b&lt;span class="w"&gt; &lt;/span&gt;~/Downloads&lt;span class="w"&gt; &lt;/span&gt;--&lt;span class="w"&gt; &lt;/span&gt;firefox
+&lt;/pre&gt;&lt;/div&gt;
+&lt;/div&gt;
+&lt;div class="section" id="conclusion"&gt;
+&lt;h2&gt;Conclusion&lt;/h2&gt;
+&lt;p&gt;While it is not always possible to escape the need for third-party software, it
+is possible to control the environment in which it operates. By leveraging
+native Linux primitives like &lt;tt class="docutils literal"&gt;systemd&lt;/tt&gt; and namespaces, high-grade isolation is
+achievable.&lt;/p&gt;
+&lt;p&gt;PS: &lt;em&gt;If you spot any issues or have suggestions for improving the script, feel free
+to raise a PR on the&lt;/em&gt; &lt;a class="reference external" href="https://github.com/copyninja/dotfiles/"&gt;repo&lt;/a&gt;.&lt;/p&gt;
+&lt;/div&gt;
+</content><category term="devops"/><category term="sandbox"/><category term="debian"/><category term="security"/><category term="systemd"/><category term="npm"/></entry><entry><title>Using Gemini CLI to Configure the Hyprland Window Manager</title><link href="https://copyninja.in/blog/agentic_hyprland_config.html" rel="alternate"/><published>2026-03-15T12:35:00+05:30</published><updated>2026-03-15T12:35:00+05:30</updated><author><name>copyninja</name></author><id>tag:copyninja.in,2026-03-15:/blog/agentic_hyprland_config.html</id><summary type="html">&lt;p class="first last"&gt;A guide on migrating to the Hyprland window manager using the Gemini
 CLI to automate configuration and reduce system bloat.&lt;/p&gt;
 </summary><content type="html">&lt;p&gt;What led to this experiment? Well, for one, Well, for one, there was a thought
 shared by Andrej Karpathy regarding the shift towards &amp;quot;Agentic&amp;quot; workflows.&lt;/p&gt;

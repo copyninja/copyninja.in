@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+          <link href="https://fonts.googleapis.com/css?family=Cantarell" rel="stylesheet">
+        <title> Hardening the Unpacakgeable: A systemd-run Sandbox for Third-Party Binaries </title>
+        <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1"/>
+        <link href="https://copyninja.in/feeds/all.atom.xml" type="application/atom+xml" rel="alternate" title="Random Ramblings Full Atom Feed" />
+        <link href="https://copyninja.in/feeds/{slug}.atom.xml" type="application/atom+xml" rel="alternate" title="Random Ramblings Categories Atom Feed" />
+        <link rel="stylesheet" type="text/css" href="/theme/css/pygments.css"/>
+        <link rel="stylesheet" type="text/css" href="/theme/css/default.css"/>
+
+
+
+    <meta name="tags" content="sandbox" />
+    <meta name="tags" content="debian" />
+    <meta name="tags" content="security" />
+    <meta name="tags" content="systemd" />
+    <meta name="tags" content="npm" />
+</head>
+
+<body>
+    <div id="header" class="body">
+        <div id="navigation">
+ | <a href="https://copyninja.in">Home</a> |           | <a href="https://copyninja.in/about">About</a> |
+          | <a href="https://copyninja.in/contact">Contact</a> |
+          | <a href="https://copyninja.in/categories.html">Categories</a> |
+          | <a href="https://copyninja.in/tags.html">Tags</a> |
+      </div>
+<h1><a href="https://copyninja.in/blog/safe-run-binary-sandbox.html">Hardening the Unpacakgeable: A systemd-run Sandbox for Third-Party Binaries</a></h1>
+  </div>
+  <div id="content">
+<section id="content" class="body">
+  <footer class="post-info">
+     <p> Posted on Apr 12, 2026
+ By copyninja
+ under devops
+     </p>
+    </abbr>
+  </footer><!-- /.post-info -->
+  <div class="entry-content">
+    <div class="section" id="the-shift-in-software-consumption">
+<h2>The Shift in Software Consumption</h2>
+<p>Historically, I have been a &quot;distribution-first&quot; user. Sticking to tools
+packaged within the Debian archives provides a layer of trust; maintainers
+validate licenses, audit code, and ensure the entire dependency chain is
+verified. However, the rapid pace of development in the Generative AI
+space—specifically with new tools like Gemini-CLI—has made this traditional
+approach difficult to sustain.</p>
+<p>Many modern CLI tools are built within the <strong>npm</strong> or <strong>Python</strong> ecosystems. For
+a distribution packager, these are a nightmare; packaging a single tool often
+requires packaging a massive, shifting dependency chain. Consequently, I found
+myself forced to use third-party binaries, bypassing the safety of the Debian
+archive.</p>
+</div>
+<div class="section" id="the-supply-chain-risk">
+<h2>The Supply Chain Risk</h2>
+<p>Recent supply chain attacks affecting widely used packages like <tt class="docutils literal">axios</tt> and
+<tt class="docutils literal">LiteLLM</tt> have made it clear: running unvetted binaries on a personal system
+is a significant risk. These scripts often have full access to your <tt class="docutils literal">$HOME</tt>
+directory, SSH keys, and the system D-Bus.</p>
+<p>After discussing these concerns with a colleague, I was inspired by his
+approach—using a Flatpak-style sandbox for even basic applications like Google
+Chrome. I decided to build a generalized version of this using <strong>OpenCode</strong> and
+<strong>Qwen 3.6 Fast</strong> (which was available for free use at the time) to create a
+robust, transient sandbox utility.</p>
+</div>
+<div class="section" id="the-solution-safe-run-binary">
+<h2>The Solution: safe-run-binary</h2>
+<p>My script, <a class="reference external" href="https://github.com/copyninja/dotfiles/blob/master/bin/safe-run-binary">safe-run-binary</a>,
+leverages <tt class="docutils literal"><span class="pre">systemd-run</span></tt> to execute binaries within an isolated scope. It
+implements strict filesystem masking and resource control to ensure that even if
+a dependency is compromised, the &quot;blast radius&quot; is contained.</p>
+</div>
+<div class="section" id="key-technical-features">
+<h2>Key Technical Features</h2>
+<dl class="docutils">
+<dt><strong>1. Virtualized Home Directory (tmpfs)</strong></dt>
+<dd>Instead of exposing my real home directory, the script mounts a <tt class="docutils literal">tmpfs</tt>
+over <tt class="docutils literal">$HOME</tt>. It then selectively creates and bind-mounts only the
+necessary subdirectories (like <tt class="docutils literal">.cache</tt> or <tt class="docutils literal">.config</tt>) into a virtual
+structure. This prevents the application from ever &quot;seeing&quot; sensitive files
+like <tt class="docutils literal"><span class="pre">~/.ssh</span></tt> or <tt class="docutils literal"><span class="pre">~/.gnupg</span></tt>.</dd>
+<dt><strong>2. D-Bus Isolation via xdg-dbus-proxy</strong></dt>
+<dd>For GUI applications, providing raw access to the D-Bus is a security hole.
+The script uses <tt class="docutils literal"><span class="pre">xdg-dbus-proxy</span></tt> to sit between the application and the
+system bus. By using the <tt class="docutils literal"><span class="pre">--filter</span></tt> and <tt class="docutils literal"><span class="pre">--talk=org.freedesktop.portal.*</span></tt>
+flags, the app can only communicate with necessary portals (like the file
+picker) rather than sniffing the entire bus.</dd>
+<dt><strong>3. Linux Namespace Restrictions</strong></dt>
+<dd><p class="first">The sandbox utilizes several <tt class="docutils literal">systemd</tt> execution properties to harden the
+process:</p>
+<ul class="last simple">
+<li><tt class="docutils literal">RestrictNamespaces=yes</tt>: For CLI tools, this prevents the app from
+creating its own nested namespaces.</li>
+<li><tt class="docutils literal">PrivateTmp=yes</tt>: Ensures a private <tt class="docutils literal">/tmp</tt> space that isn't shared with
+the host.</li>
+<li><tt class="docutils literal">NoNewPrivileges=yes</tt>: Prevents the binary from gaining elevated
+permissions through SUID/SGID bits.</li>
+</ul>
+</dd>
+<dt><strong>4. GPU and Audio Passthrough</strong></dt>
+<dd>The script intelligently detects and binds Wayland, PipeWire, and NVIDIA/DRI
+device nodes. This allows browsers like Firefox to run with full hardware
+acceleration and audio support while remaining locked out of the rest of the
+filesystem.</dd>
+</dl>
+</div>
+<div class="section" id="usage">
+<h2>Usage</h2>
+<p>To run a CLI tool like Gemini-CLI with access only to a specific directory:</p>
+<div class="highlight"><pre><span></span>safe-run-binary<span class="w"> </span>-b<span class="w"> </span>~/.gemini-config<span class="w"> </span>--<span class="w"> </span>npx<span class="w"> </span>@google/gemini-cli
+</pre></div>
+<p>For a GUI application like Firefox:</p>
+<div class="highlight"><pre><span></span>safe-run-binary<span class="w"> </span>--gui<span class="w"> </span>-b<span class="w"> </span>~/.mozilla<span class="w"> </span>-b<span class="w"> </span>~/.cache/mozilla<span class="w"> </span>-b<span class="w"> </span>~/Downloads<span class="w"> </span>--<span class="w"> </span>firefox
+</pre></div>
+</div>
+<div class="section" id="conclusion">
+<h2>Conclusion</h2>
+<p>While it is not always possible to escape the need for third-party software, it
+is possible to control the environment in which it operates. By leveraging
+native Linux primitives like <tt class="docutils literal">systemd</tt> and namespaces, high-grade isolation is
+achievable.</p>
+<p>PS: <em>If you spot any issues or have suggestions for improving the script, feel free
+to raise a PR on the</em> <a class="reference external" href="https://github.com/copyninja/dotfiles/">repo</a>.</p>
+</div>
+
+  </div><!-- /.entry-content -->
+  <div id="footer">
+    <p>
+      <italic>Tagged as:
+      debian, 
+      npm, 
+      sandbox, 
+      security, 
+      systemd, 
+      </italic>
+    </p>
+</section>
+  </div>
+  <hr/>
+  <div id="footer">    
+    Site Proudly powered by <a href="http://getpelican.com/">Pelican</a>
+  </div>
+</body>
+</html>
