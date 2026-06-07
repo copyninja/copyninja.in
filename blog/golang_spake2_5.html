@@ -327,7 +327,7 @@ the ed25519 group implementation. Scalar multiplication is multiplying a given
 elliptic curve point with a large integer (otherwise called as scalar) limited
 by subgroup order. Warner's python implementation was as follows</p>
 <pre class="code python literal-block">
-<span class="k">def</span> <span class="nf">scalarmult_element</span><span class="p">(</span><span class="n">pt</span><span class="p">,</span> <span class="n">n</span><span class="p">):</span> <span class="c1"># extended-&gt;extended</span><span class="w">
+<span class="k">def</span><span class="w"> </span><span class="nf">scalarmult_element</span><span class="p">(</span><span class="n">pt</span><span class="p">,</span> <span class="n">n</span><span class="p">):</span> <span class="c1"># extended-&gt;extended</span><span class="w">
 </span>  <span class="c1"># This form only works properly when given points that are a member of</span><span class="w">
 </span>  <span class="c1"># the main 1*L subgroup. It will give incorrect answers when called with</span><span class="w">
 </span>  <span class="c1"># the points of order 1/2/4/8, including point Zero. (it will also work</span><span class="w">

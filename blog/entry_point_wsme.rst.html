@@ -62,10 +62,10 @@ function for giving out signature of function to be exposed.</p>
 <p>I will explain this with small example. I have a dummy module which
 provides a add function and a function which exposes the add functions
 signature.</p>
-<div class="highlight"><pre><span></span><span class="k">def</span> <span class="nf">add</span><span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="n">b</span><span class="p">):</span>
+<div class="highlight"><pre><span></span><span class="k">def</span><span class="w"> </span><span class="nf">add</span><span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="n">b</span><span class="p">):</span>
     <span class="k">return</span> <span class="n">a</span> <span class="o">+</span> <span class="n">b</span>
 
-<span class="k">def</span> <span class="nf">expose_rest_func</span><span class="p">():</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">expose_rest_func</span><span class="p">():</span>
     <span class="k">return</span> <span class="p">[</span><span class="n">add</span><span class="p">,</span> <span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">]</span>
 </pre></div>
 <p>This is stored in <cite>dummy/__init__.py</cite> file. I use <cite>pbr</cite> tool to
@@ -132,13 +132,13 @@ dummy_module in its output</p>
 <p>So our entry_point is exposed now, we need to access it in our Flask
 application and expose the function using WSME. It is done by below
 code.</p>
-<div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">wsmeext.flask</span> <span class="kn">import</span> <span class="n">signature</span>
+<div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">wsmeext.flask</span><span class="w"> </span><span class="kn">import</span> <span class="n">signature</span>
 
-<span class="kn">import</span> <span class="nn">flask</span>
-<span class="kn">import</span> <span class="nn">pkg_resources</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">flask</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">pkg_resources</span>
 
 
-<span class="k">def</span> <span class="nf">main</span><span class="p">():</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">main</span><span class="p">():</span>
    <span class="n">app</span> <span class="o">=</span> <span class="n">flask</span><span class="o">.</span><span class="n">Flask</span><span class="p">(</span><span class="vm">__name__</span><span class="p">)</span>
    <span class="n">app</span><span class="o">.</span><span class="n">config</span><span class="p">[</span><span class="s1">&#39;DEBUG&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="kc">True</span>
    <span class="k">for</span> <span class="n">entrypoint</span> <span class="ow">in</span> <span class="n">pkg_resources</span><span class="o">.</span><span class="n">iter_entry_points</span><span class="p">(</span><span class="s1">&#39;myapp.api.rest&#39;</span><span class="p">):</span>
@@ -162,13 +162,13 @@ exposed).</p>
 slices but I can't help it due to limitation of python2 with python3
 there is new packing and unpacking stuff which makes code look bit
 more cooler see below.</p>
-<div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">wsmeext.flask</span> <span class="kn">import</span> <span class="n">signature</span>
+<div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">wsmeext.flask</span><span class="w"> </span><span class="kn">import</span> <span class="n">signature</span>
 
-<span class="kn">import</span> <span class="nn">flask</span>
-<span class="kn">import</span> <span class="nn">pkg_resources</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">flask</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">pkg_resources</span>
 
 
-<span class="k">def</span> <span class="nf">main</span><span class="p">():</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">main</span><span class="p">():</span>
     <span class="n">app</span> <span class="o">=</span> <span class="n">flask</span><span class="o">.</span><span class="n">Flask</span><span class="p">(</span><span class="vm">__name__</span><span class="p">)</span>
     <span class="n">app</span><span class="o">.</span><span class="n">config</span><span class="p">[</span><span class="s1">&#39;DEBUG&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="kc">True</span>
     <span class="k">for</span> <span class="n">entrypoint</span> <span class="ow">in</span> <span class="n">pkg_resources</span><span class="o">.</span><span class="n">iter_entry_points</span><span class="p">(</span><span class="s1">&#39;silpa.api.rest&#39;</span><span class="p">):</span>

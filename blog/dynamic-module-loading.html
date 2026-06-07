@@ -51,11 +51,11 @@ refactoring recently.</p>
 , that is a bit hacky code I copied from Active State Python
 recipies. I found a bit better way to do it using <cite>importlib</cite> module
 as shown below.</p>
-<div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">__future__</span> <span class="kn">import</span> <span class="n">print_function</span>
-<span class="kn">import</span> <span class="nn">sys</span>
-<span class="kn">import</span> <span class="nn">importlib</span>
+<div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">print_function</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">sys</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">importlib</span>
 
-<span class="k">def</span> <span class="nf">load_module</span><span class="p">(</span><span class="n">modulename</span><span class="p">):</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">load_module</span><span class="p">(</span><span class="n">modulename</span><span class="p">):</span>
     <span class="n">mod</span> <span class="o">=</span> <span class="kc">None</span>
     <span class="k">try</span><span class="p">:</span>
         <span class="n">mod</span> <span class="o">=</span> <span class="n">importlib</span><span class="o">.</span><span class="n">import_module</span><span class="p">(</span><span class="n">modulename</span><span class="p">)</span>
@@ -85,12 +85,12 @@ basic structure which I was looking was as follows.</p>
 </pre><p><cite>pluginloader.py</cite> is the file which needs to load python files under
 <cite>plugins</cite> directory. This was again done using <cite>importlib</cite> module as
 shown below.</p>
-<div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">os</span>
-<span class="kn">import</span> <span class="nn">sys</span>
-<span class="kn">import</span> <span class="nn">re</span>
-<span class="kn">import</span> <span class="nn">importlib</span>
+<div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">sys</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">re</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">importlib</span>
 
-<span class="k">def</span> <span class="nf">load_plugins</span><span class="p">():</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">load_plugins</span><span class="p">():</span>
     <span class="n">pysearchre</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span><span class="s1">&#39;.py$&#39;</span><span class="p">,</span> <span class="n">re</span><span class="o">.</span><span class="n">IGNORECASE</span><span class="p">)</span>
     <span class="n">pluginfiles</span> <span class="o">=</span> <span class="nb">filter</span><span class="p">(</span><span class="n">pysearchre</span><span class="o">.</span><span class="n">search</span><span class="p">,</span>
                            <span class="n">os</span><span class="o">.</span><span class="n">listdir</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">dirname</span><span class="p">(</span><span class="vm">__file__</span><span class="p">),</span>

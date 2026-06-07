@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+          <link href="https://fonts.googleapis.com/css?family=Cantarell" rel="stylesheet">
+        <title> debsecan-mcp v0.1.2 released to PyPI </title>
+        <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1"/>
+        <link href="https://copyninja.in/feeds/all.atom.xml" type="application/atom+xml" rel="alternate" title="Random Ramblings Full Atom Feed" />
+        <link href="https://copyninja.in/feeds/{slug}.atom.xml" type="application/atom+xml" rel="alternate" title="Random Ramblings Categories Atom Feed" />
+        <link rel="stylesheet" type="text/css" href="/theme/css/pygments.css"/>
+        <link rel="stylesheet" type="text/css" href="/theme/css/default.css"/>
+
+
+
+    <meta name="tags" content="generative_ai" />
+    <meta name="tags" content="debsecan" />
+    <meta name="tags" content="mcp" />
+    <meta name="tags" content="debian" />
+</head>
+
+<body>
+    <div id="header" class="body">
+        <div id="navigation">
+ | <a href="https://copyninja.in">Home</a> |           | <a href="https://copyninja.in/about">About</a> |
+          | <a href="https://copyninja.in/contact">Contact</a> |
+          | <a href="https://copyninja.in/categories.html">Categories</a> |
+          | <a href="https://copyninja.in/tags.html">Tags</a> |
+      </div>
+<h1><a href="https://copyninja.in/blog/debsecan-mcp-pypi.html">debsecan-mcp v0.1.2 released to PyPI</a></h1>
+  </div>
+  <div id="content">
+<section id="content" class="body">
+  <footer class="post-info">
+     <p> Posted on Jun 07, 2026
+ By copyninja
+ under development
+     </p>
+    </abbr>
+  </footer><!-- /.post-info -->
+  <div class="entry-content">
+    <p>I finally carved out some time today to prepare and release debsecan-mcp <a class="reference external" href="https://pypi.org/project/debsecan-mcp/">v0.1.2</a> to PyPI. During this release, I
+integrated PyPI's trusted publisher mechanism, which authenticates directly via
+GitHub Actions and eliminates the need for manual uploads or static API tokens.</p>
+<div class="section" id="what-is-new">
+<h2>What is New?</h2>
+<p>There are no feature updates in this release; the changes are strictly focused
+on PyPI publishing requirements. This was handled entirely within the Antigravity
+IDE.</p>
+<p>The primary change replaces the <cite>python-apt</cite> dependency with <cite>python-debian</cite> for
+version comparison. PyPI rejects packages that reference external Git repositories,
+and <cite>python-apt</cite> lacks an official PyPI release. The original <cite>python-apt</cite> logic
+remains intact: if the system has <cite>python-apt</cite> installed, the server defaults to
+it. Otherwise, it falls back to the comparison logic implemented via the
+<cite>python-debian</cite> <cite>NativeVersion</cite> class.</p>
+</div>
+<div class="section" id="what-next">
+<h2>What Next?</h2>
+<p>The next release will introduce a standalone CLI utility called <cite>debvulns</cite>. It
+mirrors <cite>debsecan</cite> functionality but surfaces the cleaner, richer vulnerability
+data already implemented in <cite>debsecan-mcp</cite>. The code is written, and I will
+release it once testing is complete.</p>
+<p>I also owe a post explaining my rationale for designing a CLI utility alongside
+the MCP server, and my broader thoughts on CLI vs. MCP workflows. I aim to publish
+that next week.</p>
+</div>
+
+  </div><!-- /.entry-content -->
+  <div id="footer">
+    <p>
+      <italic>Tagged as:
+      debian, 
+      debsecan, 
+      generative_ai, 
+      mcp, 
+      </italic>
+    </p>
+</section>
+  </div>
+  <hr/>
+  <div id="footer">    
+    Site Proudly powered by <a href="http://getpelican.com/">Pelican</a>
+  </div>
+</body>
+</html>

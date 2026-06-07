@@ -53,8 +53,8 @@ bit of searching and trial and error below is what I did.</p>
 <p>We need to use <cite>Extensions</cite> class from setuptools and give it path to
 modules we want to build. In my case <cite>beamsearch</cite> and <cite>viterbi</cite> are 2
 modules. So I added following lines to setup.py</p>
-<div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">setuptools.extension</span> <span class="kn">import</span> <span class="n">Extension</span>
-<span class="kn">from</span> <span class="nn">Cython.Build</span> <span class="kn">import</span> <span class="n">cythonize</span>
+<div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">setuptools.extension</span><span class="w"> </span><span class="kn">import</span> <span class="n">Extension</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">Cython.Build</span><span class="w"> </span><span class="kn">import</span> <span class="n">cythonize</span>
 
 <span class="n">extensions</span> <span class="o">=</span> <span class="p">[</span>
  <span class="n">Extension</span><span class="p">(</span>
@@ -91,11 +91,11 @@ as shown below</p>
 <p>And for the reference here is full setup.py after modifications.</p>
 <div class="highlight"><pre><span></span><span class="ch">#!/usr/bin/env python</span>
 
-<span class="kn">from</span> <span class="nn">setuptools</span> <span class="kn">import</span> <span class="n">setup</span>
-<span class="kn">from</span> <span class="nn">setuptools.extension</span> <span class="kn">import</span> <span class="n">Extension</span>
-<span class="kn">from</span> <span class="nn">Cython.Build</span> <span class="kn">import</span> <span class="n">cythonize</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">setuptools</span><span class="w"> </span><span class="kn">import</span> <span class="n">setup</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">setuptools.extension</span><span class="w"> </span><span class="kn">import</span> <span class="n">Extension</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">Cython.Build</span><span class="w"> </span><span class="kn">import</span> <span class="n">cythonize</span>
 
-<span class="kn">import</span> <span class="nn">numpy</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span>
 
 
 <span class="n">extensions</span> <span class="o">=</span> <span class="p">[</span>

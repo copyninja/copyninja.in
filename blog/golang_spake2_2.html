@@ -191,7 +191,7 @@ representation of <cite>n</cite> <span class="math">\(n = n_0 + 2n_1 + 2^2_n2 + 
 <span class="math">\([n_0..n_k] \in \{0,1\}\)</span>. Below is pseudo code for the recursive version
 of algorithm.</p>
 <pre class="code python literal-block">
-<span class="k">def</span> <span class="nf">scalarmult</span><span class="p">(</span><span class="n">P</span><span class="p">,</span> <span class="n">n</span><span class="p">):</span><span class="w">
+<span class="k">def</span><span class="w"> </span><span class="nf">scalarmult</span><span class="p">(</span><span class="n">P</span><span class="p">,</span> <span class="n">n</span><span class="p">):</span><span class="w">
 </span>       <span class="k">if</span> <span class="n">n</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span><span class="w">
 </span>           <span class="k">return</span> <span class="n">P</span> <span class="c1"># identity element</span><span class="w">
 </span>       <span class="k">if</span> <span class="n">n</span> <span class="o">&amp;</span> <span class="mi">1</span><span class="p">:</span><span class="w">

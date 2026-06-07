@@ -56,8 +56,8 @@ other than putting version string in <cite>PBR_VERSION</cite> environment variab
 documentation was contributed by me <a class="reference external" href="https://github.com/openstack-dev/pbr/commit/007f4ee2abf818b4b18b6e8347da1d4eb2e0ad9c">3 years back to pbr project.</a></p>
 <p>So finally I used <cite>versioneer</cite> to create a version string and put it in the
 environment variable <em>PBR_VERSION</em>.</p>
-<div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">os</span>
-<span class="kn">import</span> <span class="nn">versioneer</span>
+<div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">versioneer</span>
 
 <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="p">[</span><span class="s1">&#39;PBR_VERSION&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">versioneer</span><span class="o">.</span><span class="n">get_version</span><span class="p">()</span>
 
