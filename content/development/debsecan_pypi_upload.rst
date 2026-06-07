@@ -1,39 +1,39 @@
-debsecan-mcp v0.1.2 released to pypi
+debsecan-mcp v0.1.2 released to PyPI
 ####################################
 
 :date: 2026-06-07 18:19 +5:30
 :slug: debsecan-mcp-pypi
 :tags: generative_ai, debsecan, mcp, debian
 :author: copyninja
-:summary: Brief about release of debsecan-mcp server v0.1.2
+:summary: Brief about the release of debsecan-mcp server v0.1.2
 
-Its been a while and I did not get time to work on debsecan-mcp and today took
-some time to prepare and release debsecan-mcp version to PyPI. Learnt about
-using PyPI trusted publisher mechanism which works completely based on Github
-Actions and requires no manual upload or token during this release.
+I finally carved out some time today to prepare and release debsecan-mcp `v0.1.2
+<https://pypi.org/project/debsecan-mcp/>`_ to PyPI. During this release, I
+integrated PyPI's trusted publisher mechanism, which authenticates directly via
+GitHub Actions and eliminates the need for manual uploads or static API tokens.
 
 What is New?
 ============
 
-There is no feature related changes in debsecan-mcp 0.1.2 its purely changes
-done to upload to PyPI. Again completely done using new Antigravity IDE. It
-added support to use `python-debian` in version comparison and replaced
-`python-apt` from dependencies. This is done mainly because `python-apt` has no
-PyPI release and we were referencing it from Git repository which PyPI rejects
-during publishing. The code still has `python-apt` logic and if it detects
-`python-apt` on system it continues to use that over the comparison logic
-implemented using `python-debian` `NativeVersion` class.
+There are no feature updates in this release; the changes are strictly focused 
+on PyPI publishing requirements. This was handled entirely within the Antigravity 
+IDE. 
 
+The primary change replaces the `python-apt` dependency with `python-debian` for 
+version comparison. PyPI rejects packages that reference external Git repositories, 
+and `python-apt` lacks an official PyPI release. The original `python-apt` logic 
+remains intact: if the system has `python-apt` installed, the server defaults to 
+it. Otherwise, it falls back to the comparison logic implemented via the 
+`python-debian` `NativeVersion` class.
 
 What Next?
 ==========
 
-I've been having some ideas to improve this utility and next release is going to
-contain a CLI utility called `debvulns`. This is similar to `debsecan` but will
-have much cleaner and richer information which we already introduced in
-`debsecan-mcp`. Code is already created once I've tested it enough and having
-guarantee that its working as expected I will release it for general use.
+The next release will introduce a standalone CLI utility called `debvulns`. It 
+mirrors `debsecan` functionality but surfaces the cleaner, richer vulnerability 
+data already implemented in `debsecan-mcp`. The code is written, and I will 
+release it once testing is complete.
 
-There is also a post pending on why CLI over MCP as per my own understanding and
-also reason for me to design the CLI utility for debsecan-mcp. Hopefully I will
-try to complete it by next week.
+I also owe a post explaining my rationale for designing a CLI utility alongside 
+the MCP server, and my broader thoughts on CLI vs. MCP workflows. I aim to publish 
+that next week.
