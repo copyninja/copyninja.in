@@ -1,5 +1,62 @@
 <?xml version="1.0" encoding="utf-8"?>
-<feed xmlns="http://www.w3.org/2005/Atom"><title>Random Ramblings - copyninja</title><link href="https://copyninja.in/" rel="alternate"/><link href="https://copyninja.in/feeds/copyninja.atom.xml" rel="self"/><id>https://copyninja.in/</id><updated>2026-06-07T18:19:00+05:30</updated><subtitle>Random thoughts shooting out of volatile mind</subtitle><entry><title>debsecan-mcp v0.1.2 released to PyPI</title><link href="https://copyninja.in/blog/debsecan-mcp-pypi.html" rel="alternate"/><published>2026-06-07T18:19:00+05:30</published><updated>2026-06-07T18:19:00+05:30</updated><author><name>copyninja</name></author><id>tag:copyninja.in,2026-06-07:/blog/debsecan-mcp-pypi.html</id><summary type="html">&lt;p class="first last"&gt;Brief about the release of debsecan-mcp server v0.1.2&lt;/p&gt;
+<feed xmlns="http://www.w3.org/2005/Atom"><title>Random Ramblings - copyninja</title><link href="https://copyninja.in/" rel="alternate"/><link href="https://copyninja.in/feeds/copyninja.atom.xml" rel="self"/><id>https://copyninja.in/</id><updated>2026-06-21T17:36:00+05:30</updated><subtitle>Random thoughts shooting out of volatile mind</subtitle><entry><title>Releasing debvulns: CLI for listing Debian vulnerabilities</title><link href="https://copyninja.in/blog/debvulns-cli.html" rel="alternate"/><published>2026-06-21T17:36:00+05:30</published><updated>2026-06-21T17:36:00+05:30</updated><author><name>copyninja</name></author><id>tag:copyninja.in,2026-06-21:/blog/debvulns-cli.html</id><summary type="html">&lt;p class="first last"&gt;Announcing the release of debvulns CLI, a standalone utility built on the debsecan-mcp core logic.&lt;/p&gt;
+</summary><content type="html">&lt;p&gt;Following up on my previous &lt;a class="reference external" href="https://copyninja.in/blog/debsecan-mcp-pypi.html"&gt;post&lt;/a&gt;, I have released the
+&lt;cite&gt;debvulns&lt;/cite&gt; &lt;a class="reference external" href="https://pypi.org/project/debsecan-mcp/"&gt;CLI&lt;/a&gt;. This utility uses
+the same parsing logic as the &lt;cite&gt;debsecan-mcp&lt;/cite&gt; server but exposes the
+functionality directly via the command line.&lt;/p&gt;
+&lt;div class="section" id="why-a-new-cli"&gt;
+&lt;h2&gt;Why a new CLI?&lt;/h2&gt;
+&lt;p&gt;While Debian's native &lt;cite&gt;debsecan&lt;/cite&gt; utility exists, it lacks modern output formats
+like JSON and CSV, and fails to expose a significant amount of metadata
+available in the Debian Security Team's daily snapshot.&lt;/p&gt;
+&lt;p&gt;Additionally, running a persistent Model Context Protocol (MCP) server
+introduces context window overhead. The manifests and tool descriptions required
+by the protocol consume tokens even when idle. For &lt;cite&gt;debsecan-mcp&lt;/cite&gt;, the &lt;a class="reference external" href="https://modelcontextprotocol.io/docs/tools/inspector#pypi-package"&gt;MCP
+Inspector utility&lt;/a&gt; shows an
+overhead of roughly 150 tokens.&lt;/p&gt;
+&lt;p&gt;By contrast, an LLM can parse a standard CLI help menu on-demand without
+permanently draining the context window. Integrating the CLI into a persistent
+agent workflow can be achieved via a skill file, allowing the LLM to leverage the
+tool without repeated discovery overhead.&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class="section" id="what-else-is-new"&gt;
+&lt;h2&gt;What else is NEW?&lt;/h2&gt;
+&lt;p&gt;During testing, I observed discrepancies between the output of &lt;cite&gt;debsecan-mcp&lt;/cite&gt;/&lt;cite&gt;debvulns&lt;/cite&gt;
+and native &lt;cite&gt;debsecan&lt;/cite&gt;. Debugging with an LLM revealed a bug in the version
+&lt;a class="reference external" href="https://github.com/copyninja/debsecan-mcp/commit/04e9990f2d7b2d85fe04f21c4f2e22fbc9aae365"&gt;comparison logic&lt;/a&gt;
+that caused &lt;cite&gt;debvulns&lt;/cite&gt; to underreport vulnerabilities. This has been resolved.&lt;/p&gt;
+&lt;p&gt;The current interface supports structured formatting and customizable data backends:&lt;/p&gt;
+&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;usage:&lt;span class="w"&gt; &lt;/span&gt;debvulns&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="o"&gt;[&lt;/span&gt;-h&lt;span class="o"&gt;]&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="o"&gt;[&lt;/span&gt;-s&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="o"&gt;{&lt;/span&gt;critical,high,medium,low,negligible&lt;span class="o"&gt;}]&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="o"&gt;[&lt;/span&gt;-f&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="o"&gt;{&lt;/span&gt;json,csv&lt;span class="o"&gt;}]&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="o"&gt;[&lt;/span&gt;--sort-by&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="o"&gt;{&lt;/span&gt;package,cve&lt;span class="o"&gt;}]&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="o"&gt;[&lt;/span&gt;--vuln-url&lt;span class="w"&gt; &lt;/span&gt;VULN_URL&lt;span class="o"&gt;]&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="o"&gt;[&lt;/span&gt;--epss-url&lt;span class="w"&gt; &lt;/span&gt;EPSS_URL&lt;span class="o"&gt;]&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="o"&gt;[&lt;/span&gt;--suite&lt;span class="w"&gt; &lt;/span&gt;SUITE&lt;span class="o"&gt;]&lt;/span&gt;
+&lt;span class="w"&gt;                &lt;/span&gt;&lt;span class="o"&gt;[&lt;/span&gt;--cache-dir&lt;span class="w"&gt; &lt;/span&gt;CACHE_DIR&lt;span class="o"&gt;]&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="o"&gt;[&lt;/span&gt;--no-cache&lt;span class="o"&gt;]&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="o"&gt;[&lt;/span&gt;-v&lt;span class="o"&gt;]&lt;/span&gt;
+
+debvulns&lt;span class="w"&gt; &lt;/span&gt;-&lt;span class="w"&gt; &lt;/span&gt;CLI&lt;span class="w"&gt; &lt;/span&gt;Debian&lt;span class="w"&gt; &lt;/span&gt;Vulnerabilities&lt;span class="w"&gt; &lt;/span&gt;Tracker
+
+options:
+&lt;span class="w"&gt;    &lt;/span&gt;-h,&lt;span class="w"&gt; &lt;/span&gt;--help&lt;span class="w"&gt;            &lt;/span&gt;show&lt;span class="w"&gt; &lt;/span&gt;this&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="nb"&gt;help&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;message&lt;span class="w"&gt; &lt;/span&gt;and&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="nb"&gt;exit&lt;/span&gt;
+&lt;span class="w"&gt;    &lt;/span&gt;-s,&lt;span class="w"&gt; &lt;/span&gt;--severity&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="o"&gt;{&lt;/span&gt;critical,high,medium,low,negligible&lt;span class="o"&gt;}&lt;/span&gt;
+&lt;span class="w"&gt;                          &lt;/span&gt;Filter&lt;span class="w"&gt; &lt;/span&gt;vulnerabilities&lt;span class="w"&gt; &lt;/span&gt;by&lt;span class="w"&gt; &lt;/span&gt;severity
+&lt;span class="w"&gt;    &lt;/span&gt;-f,&lt;span class="w"&gt; &lt;/span&gt;--format&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="o"&gt;{&lt;/span&gt;json,csv&lt;span class="o"&gt;}&lt;/span&gt;
+&lt;span class="w"&gt;                          &lt;/span&gt;Output&lt;span class="w"&gt; &lt;/span&gt;format&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="o"&gt;(&lt;/span&gt;default:&lt;span class="w"&gt; &lt;/span&gt;json&lt;span class="o"&gt;)&lt;/span&gt;
+&lt;span class="w"&gt;    &lt;/span&gt;-sort-by&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="o"&gt;{&lt;/span&gt;package,cve&lt;span class="o"&gt;}&lt;/span&gt;
+&lt;span class="w"&gt;                          &lt;/span&gt;Sort&lt;span class="w"&gt; &lt;/span&gt;vulnerabilities&lt;span class="w"&gt; &lt;/span&gt;by&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="s1"&gt;&amp;#39;package&amp;#39;&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;or&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="s1"&gt;&amp;#39;cve&amp;#39;&lt;/span&gt;
+&lt;span class="w"&gt;    &lt;/span&gt;--vuln-url&lt;span class="w"&gt; &lt;/span&gt;VULN_URL&lt;span class="w"&gt;   &lt;/span&gt;Custom&lt;span class="w"&gt; &lt;/span&gt;URL&lt;span class="w"&gt; &lt;/span&gt;or&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="nb"&gt;local&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;path&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="k"&gt;for&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;Debian&lt;span class="w"&gt; &lt;/span&gt;Security&lt;span class="w"&gt; &lt;/span&gt;Tracker&lt;span class="w"&gt; &lt;/span&gt;data
+&lt;span class="w"&gt;    &lt;/span&gt;--epss-url&lt;span class="w"&gt; &lt;/span&gt;EPSS_URL&lt;span class="w"&gt;   &lt;/span&gt;Custom&lt;span class="w"&gt; &lt;/span&gt;URL&lt;span class="w"&gt; &lt;/span&gt;or&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="nb"&gt;local&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;path&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="k"&gt;for&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;EPSS&lt;span class="w"&gt; &lt;/span&gt;scores&lt;span class="w"&gt; &lt;/span&gt;data
+&lt;span class="w"&gt;    &lt;/span&gt;--suite&lt;span class="w"&gt; &lt;/span&gt;SUITE&lt;span class="w"&gt;         &lt;/span&gt;Debian&lt;span class="w"&gt; &lt;/span&gt;suite&lt;span class="w"&gt; &lt;/span&gt;name&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="o"&gt;(&lt;/span&gt;e.g.&lt;span class="w"&gt; &lt;/span&gt;bookworm,&lt;span class="w"&gt; &lt;/span&gt;sid&lt;span class="o"&gt;)&lt;/span&gt;.&lt;span class="w"&gt; &lt;/span&gt;Auto-detected&lt;span class="w"&gt; &lt;/span&gt;by&lt;span class="w"&gt; &lt;/span&gt;default.
+&lt;span class="w"&gt;    &lt;/span&gt;--cache-dir&lt;span class="w"&gt; &lt;/span&gt;CACHE_DIR
+&lt;span class="w"&gt;                          &lt;/span&gt;Directory&lt;span class="w"&gt; &lt;/span&gt;to&lt;span class="w"&gt; &lt;/span&gt;cache&lt;span class="w"&gt; &lt;/span&gt;fetched&lt;span class="w"&gt; &lt;/span&gt;and&lt;span class="w"&gt; &lt;/span&gt;parsed&lt;span class="w"&gt; &lt;/span&gt;data&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="o"&gt;(&lt;/span&gt;default:&lt;span class="w"&gt; &lt;/span&gt;/var/cache/debvulns&lt;span class="o"&gt;)&lt;/span&gt;
+&lt;span class="w"&gt;    &lt;/span&gt;--no-cache&lt;span class="w"&gt;            &lt;/span&gt;Do&lt;span class="w"&gt; &lt;/span&gt;not&lt;span class="w"&gt; &lt;/span&gt;use&lt;span class="w"&gt; &lt;/span&gt;cached&lt;span class="w"&gt; &lt;/span&gt;data,&lt;span class="w"&gt; &lt;/span&gt;force&lt;span class="w"&gt; &lt;/span&gt;downloading&lt;span class="w"&gt; &lt;/span&gt;and&lt;span class="w"&gt; &lt;/span&gt;parsing
+&lt;span class="w"&gt;    &lt;/span&gt;-v,&lt;span class="w"&gt; &lt;/span&gt;--verbose&lt;span class="w"&gt;         &lt;/span&gt;Enable&lt;span class="w"&gt; &lt;/span&gt;verbose&lt;span class="w"&gt; &lt;/span&gt;debug&lt;span class="w"&gt; &lt;/span&gt;logging&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="o"&gt;(&lt;/span&gt;sent&lt;span class="w"&gt; &lt;/span&gt;to&lt;span class="w"&gt; &lt;/span&gt;stderr&lt;span class="o"&gt;)&lt;/span&gt;
+&lt;/pre&gt;&lt;/div&gt;
+&lt;p&gt;By allowing users to override data sources with local snapshots of the Debian
+Security Tracker and EPSS feeds, &lt;cite&gt;debvulns&lt;/cite&gt; can run natively in airgapped
+environments.&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class="section" id="what-next"&gt;
+&lt;h2&gt;What Next?&lt;/h2&gt;
+&lt;p&gt;The next step is building a Prometheus exporter for this vulnerability data to
+streamline scanning and monitoring across data center infrastructure. Stay tuned.&lt;/p&gt;
+&lt;/div&gt;
+</content><category term="development"/><category term="generative-ai"/><category term="debsecan"/><category term="cli"/><category term="debian"/></entry><entry><title>debsecan-mcp v0.1.2 released to PyPI</title><link href="https://copyninja.in/blog/debsecan-mcp-pypi.html" rel="alternate"/><published>2026-06-07T18:19:00+05:30</published><updated>2026-06-07T18:19:00+05:30</updated><author><name>copyninja</name></author><id>tag:copyninja.in,2026-06-07:/blog/debsecan-mcp-pypi.html</id><summary type="html">&lt;p class="first last"&gt;Brief about the release of debsecan-mcp server v0.1.2&lt;/p&gt;
 </summary><content type="html">&lt;p&gt;I finally carved out some time today to prepare and release debsecan-mcp &lt;a class="reference external" href="https://pypi.org/project/debsecan-mcp/"&gt;v0.1.2&lt;/a&gt; to PyPI. During this release, I
 integrated PyPI's trusted publisher mechanism, which authenticates directly via
 GitHub Actions and eliminates the need for manual uploads or static API tokens.&lt;/p&gt;

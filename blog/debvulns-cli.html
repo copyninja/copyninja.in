@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+          <link href="https://fonts.googleapis.com/css?family=Cantarell" rel="stylesheet">
+        <title> Releasing debvulns: CLI for listing Debian vulnerabilities </title>
+        <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1"/>
+        <link href="https://copyninja.in/feeds/all.atom.xml" type="application/atom+xml" rel="alternate" title="Random Ramblings Full Atom Feed" />
+        <link href="https://copyninja.in/feeds/{slug}.atom.xml" type="application/atom+xml" rel="alternate" title="Random Ramblings Categories Atom Feed" />
+        <link rel="stylesheet" type="text/css" href="/theme/css/pygments.css"/>
+        <link rel="stylesheet" type="text/css" href="/theme/css/default.css"/>
+
+
+
+    <meta name="tags" content="generative-ai" />
+    <meta name="tags" content="debsecan" />
+    <meta name="tags" content="cli" />
+    <meta name="tags" content="debian" />
+</head>
+
+<body>
+    <div id="header" class="body">
+        <div id="navigation">
+ | <a href="https://copyninja.in">Home</a> |           | <a href="https://copyninja.in/about">About</a> |
+          | <a href="https://copyninja.in/contact">Contact</a> |
+          | <a href="https://copyninja.in/categories.html">Categories</a> |
+          | <a href="https://copyninja.in/tags.html">Tags</a> |
+      </div>
+<h1><a href="https://copyninja.in/blog/debvulns-cli.html">Releasing debvulns: CLI for listing Debian vulnerabilities</a></h1>
+  </div>
+  <div id="content">
+<section id="content" class="body">
+  <footer class="post-info">
+     <p> Posted on Jun 21, 2026
+ By copyninja
+ under development
+     </p>
+    </abbr>
+  </footer><!-- /.post-info -->
+  <div class="entry-content">
+    <p>Following up on my previous <a class="reference external" href="https://copyninja.in/blog/debsecan-mcp-pypi.html">post</a>, I have released the
+<cite>debvulns</cite> <a class="reference external" href="https://pypi.org/project/debsecan-mcp/">CLI</a>. This utility uses
+the same parsing logic as the <cite>debsecan-mcp</cite> server but exposes the
+functionality directly via the command line.</p>
+<div class="section" id="why-a-new-cli">
+<h2>Why a new CLI?</h2>
+<p>While Debian's native <cite>debsecan</cite> utility exists, it lacks modern output formats
+like JSON and CSV, and fails to expose a significant amount of metadata
+available in the Debian Security Team's daily snapshot.</p>
+<p>Additionally, running a persistent Model Context Protocol (MCP) server
+introduces context window overhead. The manifests and tool descriptions required
+by the protocol consume tokens even when idle. For <cite>debsecan-mcp</cite>, the <a class="reference external" href="https://modelcontextprotocol.io/docs/tools/inspector#pypi-package">MCP
+Inspector utility</a> shows an
+overhead of roughly 150 tokens.</p>
+<p>By contrast, an LLM can parse a standard CLI help menu on-demand without
+permanently draining the context window. Integrating the CLI into a persistent
+agent workflow can be achieved via a skill file, allowing the LLM to leverage the
+tool without repeated discovery overhead.</p>
+</div>
+<div class="section" id="what-else-is-new">
+<h2>What else is NEW?</h2>
+<p>During testing, I observed discrepancies between the output of <cite>debsecan-mcp</cite>/<cite>debvulns</cite>
+and native <cite>debsecan</cite>. Debugging with an LLM revealed a bug in the version
+<a class="reference external" href="https://github.com/copyninja/debsecan-mcp/commit/04e9990f2d7b2d85fe04f21c4f2e22fbc9aae365">comparison logic</a>
+that caused <cite>debvulns</cite> to underreport vulnerabilities. This has been resolved.</p>
+<p>The current interface supports structured formatting and customizable data backends:</p>
+<div class="highlight"><pre><span></span>usage:<span class="w"> </span>debvulns<span class="w"> </span><span class="o">[</span>-h<span class="o">]</span><span class="w"> </span><span class="o">[</span>-s<span class="w"> </span><span class="o">{</span>critical,high,medium,low,negligible<span class="o">}]</span><span class="w"> </span><span class="o">[</span>-f<span class="w"> </span><span class="o">{</span>json,csv<span class="o">}]</span><span class="w"> </span><span class="o">[</span>--sort-by<span class="w"> </span><span class="o">{</span>package,cve<span class="o">}]</span><span class="w"> </span><span class="o">[</span>--vuln-url<span class="w"> </span>VULN_URL<span class="o">]</span><span class="w"> </span><span class="o">[</span>--epss-url<span class="w"> </span>EPSS_URL<span class="o">]</span><span class="w"> </span><span class="o">[</span>--suite<span class="w"> </span>SUITE<span class="o">]</span>
+<span class="w">                </span><span class="o">[</span>--cache-dir<span class="w"> </span>CACHE_DIR<span class="o">]</span><span class="w"> </span><span class="o">[</span>--no-cache<span class="o">]</span><span class="w"> </span><span class="o">[</span>-v<span class="o">]</span>
+
+debvulns<span class="w"> </span>-<span class="w"> </span>CLI<span class="w"> </span>Debian<span class="w"> </span>Vulnerabilities<span class="w"> </span>Tracker
+
+options:
+<span class="w">    </span>-h,<span class="w"> </span>--help<span class="w">            </span>show<span class="w"> </span>this<span class="w"> </span><span class="nb">help</span><span class="w"> </span>message<span class="w"> </span>and<span class="w"> </span><span class="nb">exit</span>
+<span class="w">    </span>-s,<span class="w"> </span>--severity<span class="w"> </span><span class="o">{</span>critical,high,medium,low,negligible<span class="o">}</span>
+<span class="w">                          </span>Filter<span class="w"> </span>vulnerabilities<span class="w"> </span>by<span class="w"> </span>severity
+<span class="w">    </span>-f,<span class="w"> </span>--format<span class="w"> </span><span class="o">{</span>json,csv<span class="o">}</span>
+<span class="w">                          </span>Output<span class="w"> </span>format<span class="w"> </span><span class="o">(</span>default:<span class="w"> </span>json<span class="o">)</span>
+<span class="w">    </span>-sort-by<span class="w"> </span><span class="o">{</span>package,cve<span class="o">}</span>
+<span class="w">                          </span>Sort<span class="w"> </span>vulnerabilities<span class="w"> </span>by<span class="w"> </span><span class="s1">&#39;package&#39;</span><span class="w"> </span>or<span class="w"> </span><span class="s1">&#39;cve&#39;</span>
+<span class="w">    </span>--vuln-url<span class="w"> </span>VULN_URL<span class="w">   </span>Custom<span class="w"> </span>URL<span class="w"> </span>or<span class="w"> </span><span class="nb">local</span><span class="w"> </span>path<span class="w"> </span><span class="k">for</span><span class="w"> </span>Debian<span class="w"> </span>Security<span class="w"> </span>Tracker<span class="w"> </span>data
+<span class="w">    </span>--epss-url<span class="w"> </span>EPSS_URL<span class="w">   </span>Custom<span class="w"> </span>URL<span class="w"> </span>or<span class="w"> </span><span class="nb">local</span><span class="w"> </span>path<span class="w"> </span><span class="k">for</span><span class="w"> </span>EPSS<span class="w"> </span>scores<span class="w"> </span>data
+<span class="w">    </span>--suite<span class="w"> </span>SUITE<span class="w">         </span>Debian<span class="w"> </span>suite<span class="w"> </span>name<span class="w"> </span><span class="o">(</span>e.g.<span class="w"> </span>bookworm,<span class="w"> </span>sid<span class="o">)</span>.<span class="w"> </span>Auto-detected<span class="w"> </span>by<span class="w"> </span>default.
+<span class="w">    </span>--cache-dir<span class="w"> </span>CACHE_DIR
+<span class="w">                          </span>Directory<span class="w"> </span>to<span class="w"> </span>cache<span class="w"> </span>fetched<span class="w"> </span>and<span class="w"> </span>parsed<span class="w"> </span>data<span class="w"> </span><span class="o">(</span>default:<span class="w"> </span>/var/cache/debvulns<span class="o">)</span>
+<span class="w">    </span>--no-cache<span class="w">            </span>Do<span class="w"> </span>not<span class="w"> </span>use<span class="w"> </span>cached<span class="w"> </span>data,<span class="w"> </span>force<span class="w"> </span>downloading<span class="w"> </span>and<span class="w"> </span>parsing
+<span class="w">    </span>-v,<span class="w"> </span>--verbose<span class="w">         </span>Enable<span class="w"> </span>verbose<span class="w"> </span>debug<span class="w"> </span>logging<span class="w"> </span><span class="o">(</span>sent<span class="w"> </span>to<span class="w"> </span>stderr<span class="o">)</span>
+</pre></div>
+<p>By allowing users to override data sources with local snapshots of the Debian
+Security Tracker and EPSS feeds, <cite>debvulns</cite> can run natively in airgapped
+environments.</p>
+</div>
+<div class="section" id="what-next">
+<h2>What Next?</h2>
+<p>The next step is building a Prometheus exporter for this vulnerability data to
+streamline scanning and monitoring across data center infrastructure. Stay tuned.</p>
+</div>
+
+  </div><!-- /.entry-content -->
+  <div id="footer">
+    <p>
+      <italic>Tagged as:
+      cli, 
+      debian, 
+      debsecan, 
+      generative-ai, 
+      </italic>
+    </p>
+</section>
+  </div>
+  <hr/>
+  <div id="footer">    
+    Site Proudly powered by <a href="http://getpelican.com/">Pelican</a>
+  </div>
+</body>
+</html>
