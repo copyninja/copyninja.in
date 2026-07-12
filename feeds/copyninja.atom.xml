@@ -1,5 +1,69 @@
 <?xml version="1.0" encoding="utf-8"?>
-<feed xmlns="http://www.w3.org/2005/Atom"><title>Random Ramblings - copyninja</title><link href="https://copyninja.in/" rel="alternate"/><link href="https://copyninja.in/feeds/copyninja.atom.xml" rel="self"/><id>https://copyninja.in/</id><updated>2026-06-21T17:36:00+05:30</updated><subtitle>Random thoughts shooting out of volatile mind</subtitle><entry><title>Releasing debvulns: CLI for listing Debian vulnerabilities</title><link href="https://copyninja.in/blog/debvulns-cli.html" rel="alternate"/><published>2026-06-21T17:36:00+05:30</published><updated>2026-06-21T17:36:00+05:30</updated><author><name>copyninja</name></author><id>tag:copyninja.in,2026-06-21:/blog/debvulns-cli.html</id><summary type="html">&lt;p class="first last"&gt;Announcing the release of debvulns CLI, a standalone utility built on the debsecan-mcp core logic.&lt;/p&gt;
+<feed xmlns="http://www.w3.org/2005/Atom"><title>Random Ramblings - copyninja</title><link href="https://copyninja.in/" rel="alternate"/><link href="https://copyninja.in/feeds/copyninja.atom.xml" rel="self"/><id>https://copyninja.in/</id><updated>2026-07-21T16:55:00+05:30</updated><subtitle>Random thoughts shooting out of volatile mind</subtitle><entry><title>Releasing debvulns-exporter: Prometheus exporter for Debian System Vulnerabilities</title><link href="https://copyninja.in/blog/debvulns-exporter.html" rel="alternate"/><published>2026-07-21T16:55:00+05:30</published><updated>2026-07-21T16:55:00+05:30</updated><author><name>copyninja</name></author><id>tag:copyninja.in,2026-07-21:/blog/debvulns-exporter.html</id><summary type="html">&lt;p class="first last"&gt;Announcing the release of debvulns-exporter, a standalone Prometheus
+exporter for tracking vulnerabilities on Debian systems.&lt;/p&gt;
+</summary><content type="html">&lt;p&gt;Following up on my previous &lt;a class="reference external" href="https://copyninja.in/blog/debvulns-cli.html"&gt;post&lt;/a&gt;, I am releasing
+&lt;a class="reference external" href="https://pypi.org/project/debvulns/"&gt;debvulns-exporter&lt;/a&gt;, a Prometheus exporter
+for tracking Debian system vulnerabilities. The underlying vulnerability
+analysis logic remains identical to the  previously released MCP server and CLI
+utility.&lt;/p&gt;
+&lt;div class="section" id="why-an-exporter"&gt;
+&lt;h2&gt;Why an Exporter?&lt;/h2&gt;
+&lt;p&gt;In my engineering workflows, I frequently deal with Debian and vulnerability
+management. Most enterprise environments rely on commercial, paid vulnerability
+platforms like Tenable or Rapid7. While these platforms provide extensive
+feature sets, I noticed a distinct lack of open-source tools tailored for this
+specific pipeline. While &lt;cite&gt;debsecan&lt;/cite&gt; exists, it lacks a structured, parseable
+format suitable for building dashboards aimed at management consumption. What
+started as an experimental MCP server for learning purposes evolved into a
+practical question: why not convert it into a Prometheus exporter? Given that
+Prometheus is the de facto standard metrics platform across the industry, this
+architecture was the logical next step.&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class="section" id="design-and-exported-metrics"&gt;
+&lt;h2&gt;Design and Exported Metrics&lt;/h2&gt;
+&lt;p&gt;The exporter is implemented as a native Prometheus exporter utilizing the
+&lt;cite&gt;prometheus-client&lt;/cite&gt; library. It operates using two threads: one handles fetching
+the vulnerability data, parsing EPSS feeds, and cross-referencing installed
+packages to identify local vulnerabilities; the second handles serving the
+metrics endpoint. The full architecture details and metrics specifications can
+be found in the &lt;a class="reference external" href="https://github.com/copyninja/debsecan-mcp/blob/main/docs/prometheus_exporter_design.md"&gt;design doc&lt;/a&gt;.
+The specification was drafted during a technical brainstorming session with
+&lt;em&gt;Claude 4.6 Sonnet&lt;/em&gt; on &lt;em&gt;Antigravity&lt;/em&gt; prior to writing the implementation.&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class="section" id="testing-and-dashboarding"&gt;
+&lt;h2&gt;Testing and Dashboarding&lt;/h2&gt;
+&lt;p&gt;To validate the exporter, I spun up older &lt;em&gt;Debian 11&lt;/em&gt; and &lt;em&gt;Debian 12&lt;/em&gt; cloud
+images sourced from the &lt;a class="reference external" href="https://cloud.debian.org/images/cloud/"&gt;Debian Cloud team&lt;/a&gt;. The older image was intentionally
+selected to guarantee a standard baseline of unpatched vulnerabilities for
+testing. The local evaluation topology is structured as shown below:&lt;/p&gt;
+&lt;img alt="" src="https://copyninja.in/images/debvulns-exporter-setup.png" /&gt;
+&lt;p&gt;Rather than constructing the Grafana dashboard from scratch, I used Claude 4.6
+Sonnet via Antigravity to generate the layout configuration. The generated
+dashboard for the local testbed functions effectively:&lt;/p&gt;
+&lt;img alt="" src="https://copyninja.in/images/debvulns-exporter-dashboard.png" /&gt;
+&lt;p&gt;The complete, ready-to-import Grafana dashboard configuration is included
+directly in the &lt;cite&gt;debvulns&lt;/cite&gt; &lt;a class="reference external" href="https://github.com/copyninja/debsecan-mcp/blob/main/contrib/grafana/debvulns-dashboard.json"&gt;source code&lt;/a&gt;.&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class="section" id="renaming-the-project"&gt;
+&lt;h2&gt;Renaming the project&lt;/h2&gt;
+&lt;p&gt;To prevent namespace conflicts and confusion with the native &lt;cite&gt;debsecan&lt;/cite&gt; utility
+in Debian, I have unified the ecosystem under the &lt;em&gt;debvulns&lt;/em&gt; moniker. The core
+CLI is named &lt;cite&gt;debvulns&lt;/cite&gt;, the exporter is &lt;cite&gt;debvulns-exporter&lt;/cite&gt;, and the MCP
+component is &lt;cite&gt;debvulns-mcp&lt;/cite&gt;. The migration release has been published to &lt;a class="reference external" href="https://pypi.org/project/debsecan-mcp/"&gt;PyPI&lt;/a&gt;, and the new consolidated repository
+is active at &lt;a class="reference external" href="https://pypi.org/project/debvulns/"&gt;debvulns&lt;/a&gt;.&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class="section" id="conclusion"&gt;
+&lt;h2&gt;Conclusion&lt;/h2&gt;
+&lt;p&gt;While this began as a personal utility to fill a niche tool gap, I expect it
+will be useful for others managing Debian infrastructure at scale. My next
+objective is to formalize Debian packaging for both the CLI and the exporter.
+The MCP component will likely remain available as an independent artifact. Until
+then, happy hacking.&lt;/p&gt;
+&lt;p&gt;&lt;em&gt;Note: As a core design choice, `debvulns` still uses native `debsecan` as its
+ground-truth standard. The tool continuously cross-verifies its output against
+`debsecan` to ensure perfect functional parity and data consistency.&lt;/em&gt;&lt;/p&gt;
+&lt;/div&gt;
+</content><category term="development"/><category term="debvulns"/><category term="cli"/><category term="prometheus"/><category term="debian"/></entry><entry><title>Releasing debvulns: CLI for listing Debian vulnerabilities</title><link href="https://copyninja.in/blog/debvulns-cli.html" rel="alternate"/><published>2026-06-21T17:36:00+05:30</published><updated>2026-06-21T17:36:00+05:30</updated><author><name>copyninja</name></author><id>tag:copyninja.in,2026-06-21:/blog/debvulns-cli.html</id><summary type="html">&lt;p class="first last"&gt;Announcing the release of debvulns CLI, a standalone utility built on the debsecan-mcp core logic.&lt;/p&gt;
 </summary><content type="html">&lt;p&gt;Following up on my previous &lt;a class="reference external" href="https://copyninja.in/blog/debsecan-mcp-pypi.html"&gt;post&lt;/a&gt;, I have released the
 &lt;cite&gt;debvulns&lt;/cite&gt; &lt;a class="reference external" href="https://pypi.org/project/debsecan-mcp/"&gt;CLI&lt;/a&gt;. This utility uses
 the same parsing logic as the &lt;cite&gt;debsecan-mcp&lt;/cite&gt; server but exposes the

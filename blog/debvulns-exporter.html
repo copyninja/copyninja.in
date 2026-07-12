@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+          <link href="https://fonts.googleapis.com/css?family=Cantarell" rel="stylesheet">
+        <title> Releasing debvulns-exporter: Prometheus exporter for Debian System Vulnerabilities </title>
+        <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1"/>
+        <link href="https://copyninja.in/feeds/all.atom.xml" type="application/atom+xml" rel="alternate" title="Random Ramblings Full Atom Feed" />
+        <link href="https://copyninja.in/feeds/{slug}.atom.xml" type="application/atom+xml" rel="alternate" title="Random Ramblings Categories Atom Feed" />
+        <link rel="stylesheet" type="text/css" href="/theme/css/pygments.css"/>
+        <link rel="stylesheet" type="text/css" href="/theme/css/default.css"/>
+
+
+
+    <meta name="tags" content="debvulns" />
+    <meta name="tags" content="cli" />
+    <meta name="tags" content="prometheus" />
+    <meta name="tags" content="debian" />
+</head>
+
+<body>
+    <div id="header" class="body">
+        <div id="navigation">
+ | <a href="https://copyninja.in">Home</a> |           | <a href="https://copyninja.in/about">About</a> |
+          | <a href="https://copyninja.in/contact">Contact</a> |
+          | <a href="https://copyninja.in/categories.html">Categories</a> |
+          | <a href="https://copyninja.in/tags.html">Tags</a> |
+      </div>
+<h1><a href="https://copyninja.in/blog/debvulns-exporter.html">Releasing debvulns-exporter: Prometheus exporter for Debian System Vulnerabilities</a></h1>
+  </div>
+  <div id="content">
+<section id="content" class="body">
+  <footer class="post-info">
+     <p> Posted on Jul 21, 2026
+ By copyninja
+ under development
+     </p>
+    </abbr>
+  </footer><!-- /.post-info -->
+  <div class="entry-content">
+    <p>Following up on my previous <a class="reference external" href="https://copyninja.in/blog/debvulns-cli.html">post</a>, I am releasing
+<a class="reference external" href="https://pypi.org/project/debvulns/">debvulns-exporter</a>, a Prometheus exporter
+for tracking Debian system vulnerabilities. The underlying vulnerability
+analysis logic remains identical to the  previously released MCP server and CLI
+utility.</p>
+<div class="section" id="why-an-exporter">
+<h2>Why an Exporter?</h2>
+<p>In my engineering workflows, I frequently deal with Debian and vulnerability
+management. Most enterprise environments rely on commercial, paid vulnerability
+platforms like Tenable or Rapid7. While these platforms provide extensive
+feature sets, I noticed a distinct lack of open-source tools tailored for this
+specific pipeline. While <cite>debsecan</cite> exists, it lacks a structured, parseable
+format suitable for building dashboards aimed at management consumption. What
+started as an experimental MCP server for learning purposes evolved into a
+practical question: why not convert it into a Prometheus exporter? Given that
+Prometheus is the de facto standard metrics platform across the industry, this
+architecture was the logical next step.</p>
+</div>
+<div class="section" id="design-and-exported-metrics">
+<h2>Design and Exported Metrics</h2>
+<p>The exporter is implemented as a native Prometheus exporter utilizing the
+<cite>prometheus-client</cite> library. It operates using two threads: one handles fetching
+the vulnerability data, parsing EPSS feeds, and cross-referencing installed
+packages to identify local vulnerabilities; the second handles serving the
+metrics endpoint. The full architecture details and metrics specifications can
+be found in the <a class="reference external" href="https://github.com/copyninja/debsecan-mcp/blob/main/docs/prometheus_exporter_design.md">design doc</a>.
+The specification was drafted during a technical brainstorming session with
+<em>Claude 4.6 Sonnet</em> on <em>Antigravity</em> prior to writing the implementation.</p>
+</div>
+<div class="section" id="testing-and-dashboarding">
+<h2>Testing and Dashboarding</h2>
+<p>To validate the exporter, I spun up older <em>Debian 11</em> and <em>Debian 12</em> cloud
+images sourced from the <a class="reference external" href="https://cloud.debian.org/images/cloud/">Debian Cloud team</a>. The older image was intentionally
+selected to guarantee a standard baseline of unpatched vulnerabilities for
+testing. The local evaluation topology is structured as shown below:</p>
+<img alt="" src="https://copyninja.in/images/debvulns-exporter-setup.png" />
+<p>Rather than constructing the Grafana dashboard from scratch, I used Claude 4.6
+Sonnet via Antigravity to generate the layout configuration. The generated
+dashboard for the local testbed functions effectively:</p>
+<img alt="" src="https://copyninja.in/images/debvulns-exporter-dashboard.png" />
+<p>The complete, ready-to-import Grafana dashboard configuration is included
+directly in the <cite>debvulns</cite> <a class="reference external" href="https://github.com/copyninja/debsecan-mcp/blob/main/contrib/grafana/debvulns-dashboard.json">source code</a>.</p>
+</div>
+<div class="section" id="renaming-the-project">
+<h2>Renaming the project</h2>
+<p>To prevent namespace conflicts and confusion with the native <cite>debsecan</cite> utility
+in Debian, I have unified the ecosystem under the <em>debvulns</em> moniker. The core
+CLI is named <cite>debvulns</cite>, the exporter is <cite>debvulns-exporter</cite>, and the MCP
+component is <cite>debvulns-mcp</cite>. The migration release has been published to <a class="reference external" href="https://pypi.org/project/debsecan-mcp/">PyPI</a>, and the new consolidated repository
+is active at <a class="reference external" href="https://pypi.org/project/debvulns/">debvulns</a>.</p>
+</div>
+<div class="section" id="conclusion">
+<h2>Conclusion</h2>
+<p>While this began as a personal utility to fill a niche tool gap, I expect it
+will be useful for others managing Debian infrastructure at scale. My next
+objective is to formalize Debian packaging for both the CLI and the exporter.
+The MCP component will likely remain available as an independent artifact. Until
+then, happy hacking.</p>
+<p><em>Note: As a core design choice, `debvulns` still uses native `debsecan` as its
+ground-truth standard. The tool continuously cross-verifies its output against
+`debsecan` to ensure perfect functional parity and data consistency.</em></p>
+</div>
+
+  </div><!-- /.entry-content -->
+  <div id="footer">
+    <p>
+      <italic>Tagged as:
+      cli, 
+      debian, 
+      debvulns, 
+      prometheus, 
+      </italic>
+    </p>
+</section>
+  </div>
+  <hr/>
+  <div id="footer">    
+    Site Proudly powered by <a href="http://getpelican.com/">Pelican</a>
+  </div>
+</body>
+</html>
