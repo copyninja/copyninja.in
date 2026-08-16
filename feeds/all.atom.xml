@@ -1,5 +1,103 @@
 <?xml version="1.0" encoding="utf-8"?>
-<feed xmlns="http://www.w3.org/2005/Atom"><title>Random Ramblings</title><link href="https://copyninja.in/" rel="alternate"/><link href="https://copyninja.in/feeds/all.atom.xml" rel="self"/><id>https://copyninja.in/</id><updated>2026-07-21T16:55:00+05:30</updated><subtitle>Random thoughts shooting out of volatile mind</subtitle><entry><title>Releasing debvulns-exporter: Prometheus exporter for Debian System Vulnerabilities</title><link href="https://copyninja.in/blog/debvulns-exporter.html" rel="alternate"/><published>2026-07-21T16:55:00+05:30</published><updated>2026-07-21T16:55:00+05:30</updated><author><name>copyninja</name></author><id>tag:copyninja.in,2026-07-21:/blog/debvulns-exporter.html</id><summary type="html">&lt;p class="first last"&gt;Announcing the release of debvulns-exporter, a standalone Prometheus
+<feed xmlns="http://www.w3.org/2005/Atom"><title>Random Ramblings</title><link href="https://copyninja.in/" rel="alternate"/><link href="https://copyninja.in/feeds/all.atom.xml" rel="self"/><id>https://copyninja.in/</id><updated>2026-08-16T17:00:00+05:30</updated><subtitle>Random thoughts shooting out of volatile mind</subtitle><entry><title>Releasing debvulns-exporter and debvulns CLI 0.2.2</title><link href="https://copyninja.in/blog/debvulns-exporter-newversion.html" rel="alternate"/><published>2026-08-16T17:00:00+05:30</published><updated>2026-08-16T17:00:00+05:30</updated><author><name>copyninja</name></author><id>tag:copyninja.in,2026-08-16:/blog/debvulns-exporter-newversion.html</id><summary type="html">&lt;p class="first last"&gt;Announcing release debvulns 0.2.2 with enhancements and an updated
+dashboard&lt;/p&gt;
+</summary><content type="html">&lt;p&gt;I made another minor release with several enhancements: handling non-Debian
+origin vulnerabilities, improving data caching, and sharing the cache
+between the &lt;tt class="docutils literal"&gt;debvulns&lt;/tt&gt; CLI and the exporter. Additionally, there are a few
+improvements on the dashboard front. Here is a breakdown of what changed.&lt;/p&gt;
+&lt;div class="section" id="handling-vulnerabilities-in-non-debian-origin-packages"&gt;
+&lt;h2&gt;Handling Vulnerabilities in Non-Debian Origin Packages&lt;/h2&gt;
+&lt;p&gt;During the previous release, I noticed that the &lt;tt class="docutils literal"&gt;grafana&lt;/tt&gt; package—which is
+not in Debian and was installed via an upstream repository—was reported as
+vulnerable with multiple issues. Looking into why this happened, I found that
+all the CVEs reported in the dashboard were indeed listed on
+&lt;tt class="docutils literal"&gt;&lt;span class="pre"&gt;security-tracker.debian.org&lt;/span&gt;&lt;/tt&gt;, but without a fixed version or status
+description. The logic assumed no fix was available and marked the package
+as vulnerable on the dashboard.&lt;/p&gt;
+&lt;div class="section" id="how-did-i-solve-this"&gt;
+&lt;h3&gt;How Did I Solve This?&lt;/h3&gt;
+&lt;p&gt;Google maintains a distributed vulnerability database for open-source
+projects called &lt;a class="reference external" href="https://osv.dev"&gt;osv.dev&lt;/a&gt;. I checked the generic vulnerability
+data for those CVEs on OSV (unbound to any specific distribution) and found that
+the issues were already fixed in the upstream version I was running. What I
+needed was a way to differentiate native Debian packages from non-Debian
+packages, which corresponds to the &lt;tt class="docutils literal"&gt;Origin&lt;/tt&gt; field in APT metadata.&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class="section" id="pitfall"&gt;
+&lt;h3&gt;Pitfall&lt;/h3&gt;
+&lt;p&gt;The AI-generated code initially attempted to differentiate package origin using
+&lt;tt class="docutils literal"&gt;apt_pkg.PackageRecords&lt;/tt&gt; and its &lt;tt class="docutils literal"&gt;origin&lt;/tt&gt; field. However, many native Debian
+packages were incorrectly flagged as non-Debian. On closer inspection, when an
+upgrade is available for a package, the installed version's origin field can be
+unset. I had to resolve this by detecting available upgrades and inspecting the
+candidate version's origin instead, which was implemented in &lt;a class="reference external" href="https://github.com/copyninja/debsecan-mcp/commit/cc72d477d0d0a6ff2ba5d2b70007bfc13fd50172"&gt;this patch&lt;/a&gt;.
+This solution was proudly crafted by me ;-) (partly because I ran out of API
+limits and had to wait 6 hours for the next reset).&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class="section" id="caching-osv-data"&gt;
+&lt;h3&gt;Caching OSV Data&lt;/h3&gt;
+&lt;p&gt;Initially, the AI implemented the exporter to re-download the entire OSV dataset
+on every run, which was unnecessary. Since vulnerability data does not change
+rapidly once published, caching it on disk for longer than the standard 24-hour
+Debian/EPSS cache makes sense. OSV vulnerability data is now cached for 7 days
+before a refresh is triggered.&lt;/p&gt;
+&lt;p&gt;All cache expiration thresholds remain configurable via CLI flags.&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class="section" id="catch"&gt;
+&lt;h3&gt;Catch&lt;/h3&gt;
+&lt;p&gt;One caveat with this approach: I have not yet verified whether every upstream CVE
+is tracked on &lt;tt class="docutils literal"&gt;&lt;span class="pre"&gt;security-tracker.debian.org&lt;/span&gt;&lt;/tt&gt;. In the case of &lt;tt class="docutils literal"&gt;grafana&lt;/tt&gt;, the
+entries existed. This feature operates on the assumption that
+&lt;tt class="docutils literal"&gt;&lt;span class="pre"&gt;security-tracker.debian.org&lt;/span&gt;&lt;/tt&gt; indexes CVE metadata regardless of whether the
+package is native to Debian. I plan to re-evaluate this and add fallback handling
+if that assumption fails.&lt;/p&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;div class="section" id="unified-cache-directory-for-cli-and-exporter"&gt;
+&lt;h2&gt;Unified Cache Directory for CLI and Exporter&lt;/h2&gt;
+&lt;p&gt;Another issue was cache segregation: the &lt;tt class="docutils literal"&gt;debvulns&lt;/tt&gt; CLI utility defaulted to
+&lt;tt class="docutils literal"&gt;/var/cache/debvulns&lt;/tt&gt;, while the Prometheus exporter used
+&lt;tt class="docutils literal"&gt;&lt;span class="pre"&gt;/var/cache/debvulns-exporter&lt;/span&gt;&lt;/tt&gt;. While harmless when running only one tool,
+installing both led to duplicated cache storage and redundant network requests.
+Since the core evaluation logic is identical across both tools, they now share a
+unified cache directory to eliminate duplicate downloads.&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class="section" id="dashboard-changes"&gt;
+&lt;h2&gt;Dashboard Changes&lt;/h2&gt;
+&lt;p&gt;During the initial dashboard rollout, my test environment (my laptop alongside
+Debian 11 and Debian 12 VMs) reported a high aggregated vulnerability count.
+It was not immediately obvious whether these were distinct vulnerabilities or the
+same CVEs replicated across all three machines. This mirrors common questions
+raised during vulnerability reviews:&lt;/p&gt;
+&lt;ul class="simple"&gt;
+&lt;li&gt;How many unique vulnerabilities are present across the fleet?&lt;/li&gt;
+&lt;li&gt;Which unique packages are affected?&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;The dashboard has been redesigned to surface unique vulnerability counts
+alongside affected package lists. The updated dashboard is shown below:&lt;/p&gt;
+&lt;img alt="" src="https://copyninja.in/images/new_debvulns_dashboard.png" /&gt;
+&lt;/div&gt;
+&lt;div class="section" id="what-s-next"&gt;
+&lt;h2&gt;What's Next?&lt;/h2&gt;
+&lt;p&gt;A few planned items remain to make &lt;tt class="docutils literal"&gt;debvulns&lt;/tt&gt; a comprehensive vulnerability
+reporting toolkit for Debian systems:&lt;/p&gt;
+&lt;ol class="arabic simple"&gt;
+&lt;li&gt;&lt;strong&gt;Kernel Vulnerability Handling:&lt;/strong&gt; Currently, installing a patched kernel
+marks the vulnerability as resolved, even if the system has not rebooted into
+it. The system remains exposed while the vulnerable kernel is executing in
+memory. Factoring in running kernel versions is crucial.&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;Reboot and Service Restart Tracking:&lt;/strong&gt; Similar to kernel upgrades requiring
+a reboot, userland library and binary fixes require running services to be
+restarted. This is typically detected via &lt;tt class="docutils literal"&gt;needrestart&lt;/tt&gt;. Integrating this
+behavior directly into &lt;tt class="docutils literal"&gt;debvulns&lt;/tt&gt; will provide complete visibility in a
+single dashboard metric.&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;Debian Packaging:&lt;/strong&gt; Once the above features are stable, the final step is
+packaging &lt;tt class="docutils literal"&gt;debvulns&lt;/tt&gt; for Debian so it can be installed directly from the
+archive.&lt;/li&gt;
+&lt;/ol&gt;
+&lt;p&gt;Until then, happy hacking.&lt;/p&gt;
+&lt;/div&gt;
+</content><category term="development"/><category term="debvulns"/><category term="cli"/><category term="prometheus"/><category term="debian"/></entry><entry><title>Releasing debvulns-exporter: Prometheus exporter for Debian System Vulnerabilities</title><link href="https://copyninja.in/blog/debvulns-exporter.html" rel="alternate"/><published>2026-07-21T16:55:00+05:30</published><updated>2026-07-21T16:55:00+05:30</updated><author><name>copyninja</name></author><id>tag:copyninja.in,2026-07-21:/blog/debvulns-exporter.html</id><summary type="html">&lt;p class="first last"&gt;Announcing the release of debvulns-exporter, a standalone Prometheus
 exporter for tracking vulnerabilities on Debian systems.&lt;/p&gt;
 </summary><content type="html">&lt;p&gt;Following up on my previous &lt;a class="reference external" href="https://copyninja.in/blog/debvulns-cli.html"&gt;post&lt;/a&gt;, I am releasing
 &lt;a class="reference external" href="https://pypi.org/project/debvulns/"&gt;debvulns-exporter&lt;/a&gt;, a Prometheus exporter
