@@ -1,128 +1,120 @@
-Releasing debvulns-exporter and debvulns cli 0.2.2
+Releasing debvulns-exporter and debvulns CLI 0.2.2
 ##################################################
 
 :date: 2026-08-16 17:00 +5:30
 :slug: debvulns-exporter-newversion
-:tags: debvuns, cli, prometheus, debian
+:tags: debvulns, cli, prometheus, debian
 :author: copyninja
-:summary: Announcing release debvulns 0.2.2 with enhancements and updated
+:summary: Announcing release debvulns 0.2.2 with enhancements and an updated
           dashboard
 
 
-I made another minor release but with some enhancements to handle non Debian
-origin vulnerabilities and improving the data caching and sharing the same cache
-between the debvulns cli as well as exporter. Additionally some improvements on
-dashboard front as well. So here is what really changed
+I made another minor release with several enhancements: handling non-Debian
+origin vulnerabilities, improving data caching, and sharing the cache
+between the ``debvulns`` CLI and the exporter. Additionally, there are a few
+improvements on the dashboard front. Here is a breakdown of what changed.
 
-Handling vulnerabilities in Non Debian origin Packages
+Handling Vulnerabilities in Non-Debian Origin Packages
 ======================================================
 
-During previous release I noticed that `grafana` package which is not really in
-Debian and installed via upstream repository was shown as vulnerable with
-multiple vulnerabiltiy. I got curious on why this is happening and found that
-all CVE reported in dashboard are indeed present on
-`security-tracker.debian.org` but with no fixed or any other description. So the
-logic naturally thought no fix is available and hence it showed up as vulnerable
-on dashboard.
+During the previous release, I noticed that the ``grafana`` package—which is
+not in Debian and was installed via an upstream repository—was reported as
+vulnerable with multiple issues. Looking into why this happened, I found that
+all the CVEs reported in the dashboard were indeed listed on
+``security-tracker.debian.org``, but without a fixed version or status
+description. The logic assumed no fix was available and marked the package
+as vulnerable on the dashboard.
 
-How Did I solve this?
+How Did I Solve This?
 ---------------------
 
-There is a distributed vulnerability database maintained by Google for Open
-Source project vulnerabilities called `osv.dev`. I looked up the vulnerabilities
-in this dashboard for few shown in my dashboard and looked up generic
-vulnerability information i.e. not tied to any distribution and there I could
-find that this vulnerability is already fixed in the version I'm running. So
-essentially what I needed really was differentiate the package from Debian and
-not from Debian which is what origin field in apt mentions about.
+Google maintains a distributed vulnerability database for open-source
+projects called `osv.dev <https://osv.dev>`_. I checked the generic vulnerability
+data for those CVEs on OSV (unbound to any specific distribution) and found that
+the issues were already fixed in the upstream version I was running. What I
+needed was a way to differentiate native Debian packages from non-Debian
+packages, which corresponds to the ``Origin`` field in APT metadata.
 
 Pitfall
 -------
 
-AI got it right and wrote code to differentiate the origin and non-origin based
-on `apt_pkg.PackageRecords` `origin` field but then I noticed that a lot of
-Debian packages are marked as non Debian origin. On closely checking I noticed
-that if package is having a new version available then installed versions origin
-is unset so had to work out a way to find that there is upgrade available and
-use upgraded version to find the origin which was done by this `patch
-<https://github.com/copyninja/debsecan-mcp/commit/cc72d477d0d0a6ff2ba5d2b70007bfc13fd50172>`_
-. This solution was proudly crafted by me ;-) (reason I ran out of limits and
-waiting for 6 hours for next reset).
+The AI-generated code initially attempted to differentiate package origin using
+``apt_pkg.PackageRecords`` and its ``origin`` field. However, many native Debian
+packages were incorrectly flagged as non-Debian. On closer inspection, when an
+upgrade is available for a package, the installed version's origin field can be
+unset. I had to resolve this by detecting available upgrades and inspecting the
+candidate version's origin instead, which was implemented in `this patch
+<https://github.com/copyninja/debsecan-mcp/commit/cc72d477d0d0a6ff2ba5d2b70007bfc13fd50172>`_.
+This solution was proudly crafted by me ;-) (partly because I ran out of API
+limits and had to wait 6 hours for the next reset).
 
 Caching OSV Data
 ----------------
 
-Initially AI wrote the code such that every time I run the exporter it will
-re-download entire OSV data which was unnecessary. Also these information is not
-quickly changing once its published so it also makes sense to store it and for
-longer period that vulnerability and epss cache which has only 24h time on disk
-before refresh. Now OSV cache for vulnerabilities will be present for 7 days
-before triggering a fresh download.
+Initially, the AI implemented the exporter to re-download the entire OSV dataset
+on every run, which was unnecessary. Since vulnerability data does not change
+rapidly once published, caching it on disk for longer than the standard 24-hour
+Debian/EPSS cache makes sense. OSV vulnerability data is now cached for 7 days
+before a refresh is triggered.
 
-All the cache expiry is configurable using command linie parameter.
+All cache expiration thresholds remain configurable via CLI flags.
 
 Catch
 -----
 
-One catch of this feature is, I've not verified if every CVE published is
-present on `security-tracker.debian.org` or not. In case of `grafana` which is
-not packaged to Debian its present. So this feature will work with this
-assumption that `security-tracker.debian.org` holds all CVE information
-irrespective of if its in Debian or not. I will need to recheck on this and add
-handling if that is not the case.
+One caveat with this approach: I have not yet verified whether every upstream CVE
+is tracked on ``security-tracker.debian.org``. In the case of ``grafana``, the
+entries existed. This feature operates on the assumption that
+``security-tracker.debian.org`` indexes CVE metadata regardless of whether the
+package is native to Debian. I plan to re-evaluate this and add fallback handling
+if that assumption fails.
 
 
-Unified Cache Folder for both CLI and Exporter
-==============================================
+Unified Cache Directory for CLI and Exporter
+============================================
 
-Next thing I noticed was while AI was developing the code `debvulns` cli utility
-was using `/var/cache/debvulns` where as the Prometheus exporter was using
-`/var/cache/debvulns-exporter`. This is fine as long as any one utility is
-installed on the system, but imagine some one has both installed and in this
-case there is duplication of cache content and I felt I should avoid this
-because core logic is same for both these utilities so why not have same cache
-for both so there is no duplicate downloads saving a lot of time. 
+Another issue was cache segregation: the ``debvulns`` CLI utility defaulted to
+``/var/cache/debvulns``, while the Prometheus exporter used
+``/var/cache/debvulns-exporter``. While harmless when running only one tool,
+installing both led to duplicated cache storage and redundant network requests.
+Since the core evaluation logic is identical across both tools, they now share a
+unified cache directory to eliminate duplicate downloads.
 
 Dashboard Changes
 =================
 
-During initial release of dashboard I noticed that in my test setup which
-included my own laptop and a old Debian 12 and Debian 11 VM the vulnerability
-count was very high that got me wondering is this unique list or some
-vulnerabilties are just present on all 3 and got replicated. This is also some
-normal question I get at work place while discussing on vulnerabilities,
+During the initial dashboard rollout, my test environment (my laptop alongside
+Debian 11 and Debian 12 VMs) reported a high aggregated vulnerability count.
+It was not immediately obvious whether these were distinct vulnerabilities or the
+same CVEs replicated across all three machines. This mirrors common questions
+raised during vulnerability reviews:
 
-- How many unique vulnerabilities are present?
-- How many unique list of packages are affected?
+- How many unique vulnerabilities are present across the fleet?
+- Which unique packages are affected?
 
-So I thought why not codify this in the dashboard itself. So dashboard has been
-redesigned to give this information along with list of packages affected. New
-dashboard now looks like this, you can compare it with screenshot from my
-previous post.
+The dashboard has been redesigned to surface unique vulnerability counts
+alongside affected package lists. The updated dashboard is shown below:
 
 .. image:: {static}/images/new_debvulns_dashboard.png
 
 
-What Next?
-==========
+What's Next?
+============
 
-I still have few things in my mind which I think I should implement to make
-debvulns an complete vulnerability package for Debian which gives complete
-picture of vulnerability status of system. These include
+A few planned items remain to make ``debvulns`` a comprehensive vulnerability
+reporting toolkit for Debian systems:
 
-1. Kernel Vulnerability handling: Currently if fixed kernel is installed then
-   vulnerabiliy is considered as fixed but in reality that is not the case.
-   System is vulnerable as long as running kernel is still vulnerable
-   irrespective of packae status on disk. So adding this ability is crucial.
-2. Reboot required and service restarts: Just like kernel vulnerabiliy requires
-   reboot to new kernel many package vulnerabilities fix requires running
-   services using those binaries to be restarted to use fixed libraries /
-   binaries. This is currently exposed by a package called `needrestart`. I
-   think including this functionality inside debvulns makes sure we provide full
-   package in one place which is easier to consume or dashboard for visibility.
-3. Making this package available in Debian: With all these the package should be
-   made available in Debian so people can simply install it and get the
-   vulnerability status of their infra or machine. So this will be last part of
-   puzzle I intend to do once above 2 are handling.
+1. **Kernel Vulnerability Handling:** Currently, installing a patched kernel
+   marks the vulnerability as resolved, even if the system has not rebooted into
+   it. The system remains exposed while the vulnerable kernel is executing in
+   memory. Factoring in running kernel versions is crucial.
+2. **Reboot and Service Restart Tracking:** Similar to kernel upgrades requiring
+   a reboot, userland library and binary fixes require running services to be
+   restarted. This is typically detected via ``needrestart``. Integrating this
+   behavior directly into ``debvulns`` will provide complete visibility in a
+   single dashboard metric.
+3. **Debian Packaging:** Once the above features are stable, the final step is
+   packaging ``debvulns`` for Debian so it can be installed directly from the
+   archive.
 
-Till then happy hacking.
+Until then, happy hacking.
