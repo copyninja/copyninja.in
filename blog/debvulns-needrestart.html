@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+          <link href="https://fonts.googleapis.com/css?family=Cantarell" rel="stylesheet">
+        <title> Releasing debvulns with needrestart and kernel vulnerability handling </title>
+        <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1"/>
+        <link href="https://copyninja.in/feeds/all.atom.xml" type="application/atom+xml" rel="alternate" title="Random Ramblings Full Atom Feed" />
+        <link href="https://copyninja.in/feeds/{slug}.atom.xml" type="application/atom+xml" rel="alternate" title="Random Ramblings Categories Atom Feed" />
+        <link rel="stylesheet" type="text/css" href="/theme/css/pygments.css"/>
+        <link rel="stylesheet" type="text/css" href="/theme/css/default.css"/>
+
+
+
+    <meta name="tags" content="debvulns" />
+    <meta name="tags" content="cli" />
+    <meta name="tags" content="prometheus" />
+    <meta name="tags" content="debian" />
+    <meta name="tags" content="needrestart" />
+</head>
+
+<body>
+    <div id="header" class="body">
+        <div id="navigation">
+ | <a href="https://copyninja.in">Home</a> |           | <a href="https://copyninja.in/about">About</a> |
+          | <a href="https://copyninja.in/contact">Contact</a> |
+          | <a href="https://copyninja.in/categories.html">Categories</a> |
+          | <a href="https://copyninja.in/tags.html">Tags</a> |
+      </div>
+<h1><a href="https://copyninja.in/blog/debvulns-needrestart.html">Releasing debvulns with needrestart and kernel vulnerability handling</a></h1>
+  </div>
+  <div id="content">
+<section id="content" class="body">
+  <footer class="post-info">
+     <p> Posted on Nov 01, 2026
+ By copyninja
+ under development
+     </p>
+    </abbr>
+  </footer><!-- /.post-info -->
+  <div class="entry-content">
+    <p>After quite some time, I picked up <tt class="docutils literal">debvulns</tt> again to implement what I
+mentioned in my <a class="reference external" href="https://copyninja.in/blog/debvulns-exporter-newversion.html">previous post</a>: exporting reboot
+required status and identifying services that need a restart.
+Additionally, I wanted to ensure kernel vulnerabilities are not marked as
+fixed unless the running kernel matches or exceeds the fixed version. Both
+features are now live in version <tt class="docutils literal">0.2.4</tt> (intermediate release <tt class="docutils literal">0.2.3</tt>
+only included the needrestart functionality).</p>
+<div class="section" id="why-needrestart">
+<h2>Why needrestart?</h2>
+<p>When you update packages on a system, security fixes do not take effect until
+running processes actually use the updated binaries from disk. When an upgrade
+occurs, existing processes continue executing the older, vulnerable code loaded
+into memory, while only newly spawned instances pick up the fixed binary.
+The <tt class="docutils literal">needrestart</tt> package in Debian exists specifically for this purpose. It
+can run in either report mode or action mode: report mode provides machine-readable
+output, while action mode automatically restarts affected services.</p>
+<div class="section" id="why-integrate-needrestart-into-debvulns">
+<h3>Why integrate needrestart into debvulns?</h3>
+<p><tt class="docutils literal">needrestart</tt> is a standalone utility that can run independently or hook into
+<tt class="docutils literal">apt</tt> to run automatically after an upgrade. On desktop systems, it typically
+runs interactively with a TUI prompt; on headless servers, it can be set to take
+non-interactive default actions. In batch mode, it avoids restarting sensitive
+system components (such as <tt class="docutils literal">dbus</tt>) to prevent destabilizing the session.</p>
+<p>Integrating this into <tt class="docutils literal">debvulns</tt> is not about replacing <tt class="docutils literal">needrestart</tt> or
+<tt class="docutils literal">debsecan</tt>, but rather bringing vulnerability and remediation state into a single,
+discoverable interface. <tt class="docutils literal">debvulns</tt> aggregates these signals into a standard
+format—in this case, Prometheus metrics and tags that can be visualized in
+Grafana, monitored by alerting systems, or consumed downstream by automation tools.</p>
+</div>
+</div>
+<div class="section" id="why-special-handling-for-kernel">
+<h2>Why Special Handling for Kernel?</h2>
+<p>Just as user-space daemons require a restart after patching, a patched kernel
+requires a system reboot into the new image before the vulnerability is truly
+mitigated. Previously, <tt class="docutils literal">debvulns</tt> only verified whether the patched package
+version was installed on disk. If the deb package was installed, the CVE was
+marked as resolved, which creates a false sense of security while running the old
+kernel.</p>
+<p>With this release, <tt class="docutils literal">debvulns</tt> now checks the active running kernel release. A
+kernel vulnerability is considered resolved only when the system is running the
+fixed kernel version. Until a reboot happens, the system remains reported as
+vulnerable.</p>
+<p>The updated dashboard reflects these changes below. It will need further polish,
+but key metrics and restart/reboot states are now visible:</p>
+<img alt="debvulns Grafana dashboard with needrestart and kernel metrics" src="https://copyninja.in/images/needrestart-debvulns.png" />
+</div>
+<div class="section" id="what-next">
+<h2>What Next?</h2>
+<p>These were the two pending functional areas I wanted to cover, and no further major
+features are planned for now. Next up will be reviewing the entire codebase to
+identify potential optimizations and remove any unnecessary complexity. I haven't
+done a full pass through the repository since the initial skeleton implementation,
+so testing edge cases and cleaning up the internals will be the main focus.
+This will likely take some time since I only hack on this during weekend downtime.
+Until then, happy hacking, give the new release a try, and file an issue if you
+run into bugs.</p>
+</div>
+
+  </div><!-- /.entry-content -->
+  <div id="footer">
+    <p>
+      <italic>Tagged as:
+      cli, 
+      debian, 
+      debvulns, 
+      needrestart, 
+      prometheus, 
+      </italic>
+    </p>
+</section>
+  </div>
+  <hr/>
+  <div id="footer">    
+    Site Proudly powered by <a href="http://getpelican.com/">Pelican</a>
+  </div>
+</body>
+</html>

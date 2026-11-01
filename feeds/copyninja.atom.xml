@@ -1,5 +1,64 @@
 <?xml version="1.0" encoding="utf-8"?>
-<feed xmlns="http://www.w3.org/2005/Atom"><title>Random Ramblings - copyninja</title><link href="https://copyninja.in/" rel="alternate"/><link href="https://copyninja.in/feeds/copyninja.atom.xml" rel="self"/><id>https://copyninja.in/</id><updated>2026-08-16T17:00:00+05:30</updated><subtitle>Random thoughts shooting out of volatile mind</subtitle><entry><title>Releasing debvulns-exporter and debvulns CLI 0.2.2</title><link href="https://copyninja.in/blog/debvulns-exporter-newversion.html" rel="alternate"/><published>2026-08-16T17:00:00+05:30</published><updated>2026-08-16T17:00:00+05:30</updated><author><name>copyninja</name></author><id>tag:copyninja.in,2026-08-16:/blog/debvulns-exporter-newversion.html</id><summary type="html">&lt;p class="first last"&gt;Announcing release debvulns 0.2.2 with enhancements and an updated
+<feed xmlns="http://www.w3.org/2005/Atom"><title>Random Ramblings - copyninja</title><link href="https://copyninja.in/" rel="alternate"/><link href="https://copyninja.in/feeds/copyninja.atom.xml" rel="self"/><id>https://copyninja.in/</id><updated>2026-11-01T18:03:00+05:30</updated><subtitle>Random thoughts shooting out of volatile mind</subtitle><entry><title>Releasing debvulns with needrestart and kernel vulnerability handling</title><link href="https://copyninja.in/blog/debvulns-needrestart.html" rel="alternate"/><published>2026-11-01T18:03:00+05:30</published><updated>2026-11-01T18:03:00+05:30</updated><author><name>copyninja</name></author><id>tag:copyninja.in,2026-11-01:/blog/debvulns-needrestart.html</id><summary type="html">&lt;p class="first last"&gt;Announcing release of debvulns with new features related to
+needrestart and kernel upgrade handling&lt;/p&gt;
+</summary><content type="html">&lt;p&gt;After quite some time, I picked up &lt;tt class="docutils literal"&gt;debvulns&lt;/tt&gt; again to implement what I
+mentioned in my &lt;a class="reference external" href="https://copyninja.in/blog/debvulns-exporter-newversion.html"&gt;previous post&lt;/a&gt;: exporting reboot
+required status and identifying services that need a restart.
+Additionally, I wanted to ensure kernel vulnerabilities are not marked as
+fixed unless the running kernel matches or exceeds the fixed version. Both
+features are now live in version &lt;tt class="docutils literal"&gt;0.2.4&lt;/tt&gt; (intermediate release &lt;tt class="docutils literal"&gt;0.2.3&lt;/tt&gt;
+only included the needrestart functionality).&lt;/p&gt;
+&lt;div class="section" id="why-needrestart"&gt;
+&lt;h2&gt;Why needrestart?&lt;/h2&gt;
+&lt;p&gt;When you update packages on a system, security fixes do not take effect until
+running processes actually use the updated binaries from disk. When an upgrade
+occurs, existing processes continue executing the older, vulnerable code loaded
+into memory, while only newly spawned instances pick up the fixed binary.
+The &lt;tt class="docutils literal"&gt;needrestart&lt;/tt&gt; package in Debian exists specifically for this purpose. It
+can run in either report mode or action mode: report mode provides machine-readable
+output, while action mode automatically restarts affected services.&lt;/p&gt;
+&lt;div class="section" id="why-integrate-needrestart-into-debvulns"&gt;
+&lt;h3&gt;Why integrate needrestart into debvulns?&lt;/h3&gt;
+&lt;p&gt;&lt;tt class="docutils literal"&gt;needrestart&lt;/tt&gt; is a standalone utility that can run independently or hook into
+&lt;tt class="docutils literal"&gt;apt&lt;/tt&gt; to run automatically after an upgrade. On desktop systems, it typically
+runs interactively with a TUI prompt; on headless servers, it can be set to take
+non-interactive default actions. In batch mode, it avoids restarting sensitive
+system components (such as &lt;tt class="docutils literal"&gt;dbus&lt;/tt&gt;) to prevent destabilizing the session.&lt;/p&gt;
+&lt;p&gt;Integrating this into &lt;tt class="docutils literal"&gt;debvulns&lt;/tt&gt; is not about replacing &lt;tt class="docutils literal"&gt;needrestart&lt;/tt&gt; or
+&lt;tt class="docutils literal"&gt;debsecan&lt;/tt&gt;, but rather bringing vulnerability and remediation state into a single,
+discoverable interface. &lt;tt class="docutils literal"&gt;debvulns&lt;/tt&gt; aggregates these signals into a standard
+format—in this case, Prometheus metrics and tags that can be visualized in
+Grafana, monitored by alerting systems, or consumed downstream by automation tools.&lt;/p&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;div class="section" id="why-special-handling-for-kernel"&gt;
+&lt;h2&gt;Why Special Handling for Kernel?&lt;/h2&gt;
+&lt;p&gt;Just as user-space daemons require a restart after patching, a patched kernel
+requires a system reboot into the new image before the vulnerability is truly
+mitigated. Previously, &lt;tt class="docutils literal"&gt;debvulns&lt;/tt&gt; only verified whether the patched package
+version was installed on disk. If the deb package was installed, the CVE was
+marked as resolved, which creates a false sense of security while running the old
+kernel.&lt;/p&gt;
+&lt;p&gt;With this release, &lt;tt class="docutils literal"&gt;debvulns&lt;/tt&gt; now checks the active running kernel release. A
+kernel vulnerability is considered resolved only when the system is running the
+fixed kernel version. Until a reboot happens, the system remains reported as
+vulnerable.&lt;/p&gt;
+&lt;p&gt;The updated dashboard reflects these changes below. It will need further polish,
+but key metrics and restart/reboot states are now visible:&lt;/p&gt;
+&lt;img alt="debvulns Grafana dashboard with needrestart and kernel metrics" src="https://copyninja.in/images/needrestart-debvulns.png" /&gt;
+&lt;/div&gt;
+&lt;div class="section" id="what-next"&gt;
+&lt;h2&gt;What Next?&lt;/h2&gt;
+&lt;p&gt;These were the two pending functional areas I wanted to cover, and no further major
+features are planned for now. Next up will be reviewing the entire codebase to
+identify potential optimizations and remove any unnecessary complexity. I haven't
+done a full pass through the repository since the initial skeleton implementation,
+so testing edge cases and cleaning up the internals will be the main focus.
+This will likely take some time since I only hack on this during weekend downtime.
+Until then, happy hacking, give the new release a try, and file an issue if you
+run into bugs.&lt;/p&gt;
+&lt;/div&gt;
+</content><category term="development"/><category term="debvulns"/><category term="cli"/><category term="prometheus"/><category term="debian"/><category term="needrestart"/></entry><entry><title>Releasing debvulns-exporter and debvulns CLI 0.2.2</title><link href="https://copyninja.in/blog/debvulns-exporter-newversion.html" rel="alternate"/><published>2026-08-16T17:00:00+05:30</published><updated>2026-08-16T17:00:00+05:30</updated><author><name>copyninja</name></author><id>tag:copyninja.in,2026-08-16:/blog/debvulns-exporter-newversion.html</id><summary type="html">&lt;p class="first last"&gt;Announcing release debvulns 0.2.2 with enhancements and an updated
 dashboard&lt;/p&gt;
 </summary><content type="html">&lt;p&gt;I made another minor release with several enhancements: handling non-Debian
 origin vulnerabilities, improving data caching, and sharing the cache
