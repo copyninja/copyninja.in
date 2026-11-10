@@ -1,5 +1,95 @@
 <?xml version="1.0" encoding="utf-8"?>
-<feed xmlns="http://www.w3.org/2005/Atom"><title>Random Ramblings - copyninja</title><link href="https://copyninja.in/" rel="alternate"/><link href="https://copyninja.in/feeds/copyninja.atom.xml" rel="self"/><id>https://copyninja.in/</id><updated>2026-11-01T18:03:00+05:30</updated><subtitle>Random thoughts shooting out of volatile mind</subtitle><entry><title>Releasing debvulns with needrestart and kernel vulnerability handling</title><link href="https://copyninja.in/blog/debvulns-needrestart.html" rel="alternate"/><published>2026-11-01T18:03:00+05:30</published><updated>2026-11-01T18:03:00+05:30</updated><author><name>copyninja</name></author><id>tag:copyninja.in,2026-11-01:/blog/debvulns-needrestart.html</id><summary type="html">&lt;p class="first last"&gt;Announcing release of debvulns with new features related to
+<feed xmlns="http://www.w3.org/2005/Atom"><title>Random Ramblings - copyninja</title><link href="https://copyninja.in/" rel="alternate"/><link href="https://copyninja.in/feeds/copyninja.atom.xml" rel="self"/><id>https://copyninja.in/</id><updated>2026-11-10T12:30:00+05:30</updated><subtitle>Random thoughts shooting out of volatile mind</subtitle><entry><title>Experiment: Debian Cloud/VM Images using mkosi</title><link href="https://copyninja.in/blog/debian-cloud-mkosi.html" rel="alternate"/><published>2026-11-10T12:30:00+05:30</published><updated>2026-11-10T12:30:00+05:30</updated><author><name>copyninja</name></author><id>tag:copyninja.in,2026-11-10:/blog/debian-cloud-mkosi.html</id><summary type="html">&lt;p class="first last"&gt;Experiment to convert debian-cloud-images into declarative, mkosi-based images with Btrfs and systemd-boot.&lt;/p&gt;
+</summary><content type="html">&lt;p&gt;Debian's &lt;a class="reference external" href="https://cloud.debian.org/images/cloud/"&gt;Cloud Images&lt;/a&gt; for various
+public cloud platforms and VM environments are built using a tool called
+&lt;a class="reference external" href="https://tracker.debian.org/pkg/debian-cloud-images"&gt;debian-cloud-images&lt;/a&gt;,
+an in-house utility developed and maintained by the &lt;em&gt;Debian Cloud Team&lt;/em&gt;.&lt;/p&gt;
+&lt;div class="section" id="what"&gt;
+&lt;h2&gt;What?&lt;/h2&gt;
+&lt;p&gt;The &lt;em&gt;debian-cloud-images&lt;/em&gt; tooling uses FAI (Fully Automatic Installation) to create
+custom VM images for public clouds like &lt;em&gt;GCP&lt;/em&gt;, &lt;em&gt;Azure&lt;/em&gt;, and &lt;em&gt;AWS&lt;/em&gt;, along with the
+&lt;em&gt;genericcloud&lt;/em&gt; class. I wanted to convert this into a fully declarative, mkosi-based
+image build where the entire image is described using INI-format configuration files,
+with only a few post-installation scripts to handle final customizations.&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class="section" id="why"&gt;
+&lt;h2&gt;Why?&lt;/h2&gt;
+&lt;p&gt;I've been working with various image customization formats for a long time. In my
+previous company, I used to build customized industrial PC distributions based purely
+on Debian using &lt;em&gt;multistrap&lt;/em&gt; and a bunch of shell scripts to stitch together raw image
+creation, bootloader installation, etc. I've also done custom installs using
+&lt;em&gt;debootstrap&lt;/em&gt; on my own laptop with &lt;em&gt;systemd-boot&lt;/em&gt; as the bootloader, but that was
+mostly hand-crafted and not automated. Once I came across &lt;em&gt;mkosi&lt;/em&gt;, I was impressed by
+how a single utility can do everything and churn out a fully usable image without extra
+glue scripts for partitioning and image creation. You still need a few scripts to
+finalize some parts of the installation (via postinst hooks), but those are very
+minimal.&lt;/p&gt;
+&lt;p&gt;So I decided: why not convert &lt;em&gt;debian-cloud-images&lt;/em&gt; into mkosi's declarative format
+with a few architectural changes? My requirements were:&lt;/p&gt;
+&lt;ol class="arabic"&gt;
+&lt;li&gt;&lt;p class="first"&gt;&lt;strong&gt;Btrfs as the root filesystem&lt;/strong&gt;: Partly because I like it, but primarily for the
+ability to use transparent compression (&lt;cite&gt;zstd:1&lt;/cite&gt;), subvolumes, and snapshots for
+atomic rollbacks when things go wrong.&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;&lt;p class="first"&gt;&lt;strong&gt;systemd-boot and Unified Kernel Images (UKI)&lt;/strong&gt;: Primarily because &lt;em&gt;systemd-boot&lt;/em&gt;
+is clean and minimal—exactly what a modern bootloader should be. Combining it with
+UKIs and UEFI Secure Boot is bliss compared to the complexity of the GRUB2 world.&lt;/p&gt;
+&lt;p&gt;&lt;strong&gt;Note:&lt;/strong&gt; &lt;em&gt;This intentionally drops legacy BIOS (MBR/CSM) partitioning support in
+favor of pure UEFI. Modern cloud platforms (AWS Nitro, Azure Gen2, GCP) support
+UEFI natively, and dropping BIOS allows shedding significant legacy bootloader
+baggage—though it does make these images unsuitable for older, non-UEFI hypervisors.&lt;/em&gt;&lt;/p&gt;
+&lt;/li&gt;
+&lt;/ol&gt;
+&lt;/div&gt;
+&lt;div class="section" id="implementation"&gt;
+&lt;h2&gt;Implementation&lt;/h2&gt;
+&lt;p&gt;Of course, the initial heavy lifting was done mostly using Antigravity (&lt;em&gt;agy&lt;/em&gt;), along with
+debugging, tuning, and cleanup from my side. I pointed &lt;em&gt;agy&lt;/em&gt; to a local copy of
+&lt;em&gt;debian-cloud-images&lt;/em&gt; and laid out my requirements: preserve parity with the original
+packages and configurations, while enabling selective builds for each cloud via modular
+profiles. The resulting &lt;a class="reference external" href="https://github.com/copyninja/debian-cloud-mkosi/blob/main/spec/SPECIFICATION.md"&gt;specification is documented here&lt;/a&gt;.&lt;/p&gt;
+&lt;p&gt;The repository also includes a &lt;a class="reference external" href="https://github.com/copyninja/debian-cloud-mkosi/blob/main/scripts/verify-image-parity.sh"&gt;verification script&lt;/a&gt;
+that audits functional parity against official images produced by &lt;em&gt;debian-cloud-images&lt;/em&gt;
+(verifying packages, APT deb822 sources, and systemd services, while accounting for the
+switch to Btrfs and systemd-boot). Initial verification was performed for all Trixie
+profiles, and the parity report is published &lt;a class="reference external" href="https://github.com/copyninja/debian-cloud-mkosi/blob/main/PARITY_REPORT.md"&gt;here&lt;/a&gt;.&lt;/p&gt;
+&lt;p&gt;I've also booted the &lt;em&gt;genericcloud&lt;/em&gt; profile image under UEFI in a local VM to verify
+live bootability, &lt;cite&gt;bootctl status&lt;/cite&gt;, network connectivity, and APT repository setup.
+This completes Phase 1 of the implementation. The remaining phases outlined in the
+specification include:&lt;/p&gt;
+&lt;ol class="arabic simple"&gt;
+&lt;li&gt;&lt;strong&gt;Phase 2: Immutable Images with dm-verity&lt;/strong&gt;:
+Configure &lt;cite&gt;Verity=hash&lt;/cite&gt; in systemd-repart's &lt;cite&gt;10-root.conf&lt;/cite&gt;. Enable mkosi auto-signing
+for the verity root hash and pass the root hash into UKI kernel command lines
+automatically.&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;Phase 3: Secure Boot &amp;amp; Signed UKIs&lt;/strong&gt;:
+Integrate &lt;cite&gt;SecureBoot=yes&lt;/cite&gt; with custom owner keys or &lt;cite&gt;ShimBootloader=signed&lt;/cite&gt; using
+Microsoft Third-Party CA signed shim binaries.&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;Phase 4: System Extensions (systemd-sysext)&lt;/strong&gt;:
+Decouple cloud vendor agents (AWS CLI, Azure waagent, GCP guest agent) into separate
+&lt;cite&gt;.raw&lt;/cite&gt; system extensions. Maintain a single unified, signed base OS image across all
+cloud platforms.&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;Phase 5: Btrfs Automated Rollbacks&lt;/strong&gt;:
+Combine Btrfs &lt;cite&gt;&amp;#64;snapshots&lt;/cite&gt; with systemd-boot snapshot boot entries for fail-safe OS
+upgrades.&lt;/li&gt;
+&lt;/ol&gt;
+&lt;p&gt;Another advantage of this setup is that the same tooling can build images for physical
+laptops and bare-metal servers. For example, in an &lt;a class="reference external" href="https://copyninja.in/blog/live_install_debian.html"&gt;earlier post&lt;/a&gt;, I walked through live-booting
+with &lt;em&gt;debootstrap&lt;/em&gt; and manually configuring &lt;em&gt;systemd-boot&lt;/em&gt; for a custom UEFI
+installation. With &lt;em&gt;mkosi&lt;/em&gt;, I can simply generate a customized image locally with UKIs
+ready to go, live-boot the target machine, and write the image directly to the root disk.&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class="section" id="conclusion"&gt;
+&lt;h2&gt;Conclusion&lt;/h2&gt;
+&lt;p&gt;This experiment is an exploration of the power of &lt;em&gt;mkosi&lt;/em&gt;; I haven't discussed adoption
+with the &lt;em&gt;Debian Cloud Team&lt;/em&gt; yet. For now, this will continue as my pet project. While
+I won't be hosting pre-built binary images, anyone interested is welcome to clone the
+repository and build the images locally.&lt;/p&gt;
+&lt;p&gt;I will probably take some more time before tackling dm-verity images, as I want to
+understand the nuances thoroughly before experimenting with them. Until then, happy
+hacking! Please report any issues or suggestions on &lt;a class="reference external" href="https://github.com/copyninja/debian-cloud-mkosi/issues"&gt;GitHub&lt;/a&gt;.&lt;/p&gt;
+&lt;/div&gt;
+</content><category term="development"/><category term="debian"/><category term="cloud"/><category term="mkosi"/><category term="vm images"/></entry><entry><title>Releasing debvulns with needrestart and kernel vulnerability handling</title><link href="https://copyninja.in/blog/debvulns-needrestart.html" rel="alternate"/><published>2026-11-01T18:03:00+05:30</published><updated>2026-11-01T18:03:00+05:30</updated><author><name>copyninja</name></author><id>tag:copyninja.in,2026-11-01:/blog/debvulns-needrestart.html</id><summary type="html">&lt;p class="first last"&gt;Announcing release of debvulns with new features related to
 needrestart and kernel upgrade handling&lt;/p&gt;
 </summary><content type="html">&lt;p&gt;After quite some time, I picked up &lt;tt class="docutils literal"&gt;debvulns&lt;/tt&gt; again to implement what I
 mentioned in my &lt;a class="reference external" href="https://copyninja.in/blog/debvulns-exporter-newversion.html"&gt;previous post&lt;/a&gt;: exporting reboot

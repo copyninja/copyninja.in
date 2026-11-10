@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+          <link href="https://fonts.googleapis.com/css?family=Cantarell" rel="stylesheet">
+        <title> Experiment: Debian Cloud/VM Images using mkosi </title>
+        <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1"/>
+        <link href="https://copyninja.in/feeds/all.atom.xml" type="application/atom+xml" rel="alternate" title="Random Ramblings Full Atom Feed" />
+        <link href="https://copyninja.in/feeds/{slug}.atom.xml" type="application/atom+xml" rel="alternate" title="Random Ramblings Categories Atom Feed" />
+        <link rel="stylesheet" type="text/css" href="/theme/css/pygments.css"/>
+        <link rel="stylesheet" type="text/css" href="/theme/css/default.css"/>
+
+
+
+    <meta name="tags" content="debian" />
+    <meta name="tags" content="cloud" />
+    <meta name="tags" content="mkosi" />
+    <meta name="tags" content="vm images" />
+</head>
+
+<body>
+    <div id="header" class="body">
+        <div id="navigation">
+ | <a href="https://copyninja.in">Home</a> |           | <a href="https://copyninja.in/about">About</a> |
+          | <a href="https://copyninja.in/contact">Contact</a> |
+          | <a href="https://copyninja.in/categories.html">Categories</a> |
+          | <a href="https://copyninja.in/tags.html">Tags</a> |
+      </div>
+<h1><a href="https://copyninja.in/blog/debian-cloud-mkosi.html">Experiment: Debian Cloud/VM Images using mkosi</a></h1>
+  </div>
+  <div id="content">
+<section id="content" class="body">
+  <footer class="post-info">
+     <p> Posted on Nov 10, 2026
+ By copyninja
+ under development
+     </p>
+    </abbr>
+  </footer><!-- /.post-info -->
+  <div class="entry-content">
+    <p>Debian's <a class="reference external" href="https://cloud.debian.org/images/cloud/">Cloud Images</a> for various
+public cloud platforms and VM environments are built using a tool called
+<a class="reference external" href="https://tracker.debian.org/pkg/debian-cloud-images">debian-cloud-images</a>,
+an in-house utility developed and maintained by the <em>Debian Cloud Team</em>.</p>
+<div class="section" id="what">
+<h2>What?</h2>
+<p>The <em>debian-cloud-images</em> tooling uses FAI (Fully Automatic Installation) to create
+custom VM images for public clouds like <em>GCP</em>, <em>Azure</em>, and <em>AWS</em>, along with the
+<em>genericcloud</em> class. I wanted to convert this into a fully declarative, mkosi-based
+image build where the entire image is described using INI-format configuration files,
+with only a few post-installation scripts to handle final customizations.</p>
+</div>
+<div class="section" id="why">
+<h2>Why?</h2>
+<p>I've been working with various image customization formats for a long time. In my
+previous company, I used to build customized industrial PC distributions based purely
+on Debian using <em>multistrap</em> and a bunch of shell scripts to stitch together raw image
+creation, bootloader installation, etc. I've also done custom installs using
+<em>debootstrap</em> on my own laptop with <em>systemd-boot</em> as the bootloader, but that was
+mostly hand-crafted and not automated. Once I came across <em>mkosi</em>, I was impressed by
+how a single utility can do everything and churn out a fully usable image without extra
+glue scripts for partitioning and image creation. You still need a few scripts to
+finalize some parts of the installation (via postinst hooks), but those are very
+minimal.</p>
+<p>So I decided: why not convert <em>debian-cloud-images</em> into mkosi's declarative format
+with a few architectural changes? My requirements were:</p>
+<ol class="arabic">
+<li><p class="first"><strong>Btrfs as the root filesystem</strong>: Partly because I like it, but primarily for the
+ability to use transparent compression (<cite>zstd:1</cite>), subvolumes, and snapshots for
+atomic rollbacks when things go wrong.</p>
+</li>
+<li><p class="first"><strong>systemd-boot and Unified Kernel Images (UKI)</strong>: Primarily because <em>systemd-boot</em>
+is clean and minimal—exactly what a modern bootloader should be. Combining it with
+UKIs and UEFI Secure Boot is bliss compared to the complexity of the GRUB2 world.</p>
+<p><strong>Note:</strong> <em>This intentionally drops legacy BIOS (MBR/CSM) partitioning support in
+favor of pure UEFI. Modern cloud platforms (AWS Nitro, Azure Gen2, GCP) support
+UEFI natively, and dropping BIOS allows shedding significant legacy bootloader
+baggage—though it does make these images unsuitable for older, non-UEFI hypervisors.</em></p>
+</li>
+</ol>
+</div>
+<div class="section" id="implementation">
+<h2>Implementation</h2>
+<p>Of course, the initial heavy lifting was done mostly using Antigravity (<em>agy</em>), along with
+debugging, tuning, and cleanup from my side. I pointed <em>agy</em> to a local copy of
+<em>debian-cloud-images</em> and laid out my requirements: preserve parity with the original
+packages and configurations, while enabling selective builds for each cloud via modular
+profiles. The resulting <a class="reference external" href="https://github.com/copyninja/debian-cloud-mkosi/blob/main/spec/SPECIFICATION.md">specification is documented here</a>.</p>
+<p>The repository also includes a <a class="reference external" href="https://github.com/copyninja/debian-cloud-mkosi/blob/main/scripts/verify-image-parity.sh">verification script</a>
+that audits functional parity against official images produced by <em>debian-cloud-images</em>
+(verifying packages, APT deb822 sources, and systemd services, while accounting for the
+switch to Btrfs and systemd-boot). Initial verification was performed for all Trixie
+profiles, and the parity report is published <a class="reference external" href="https://github.com/copyninja/debian-cloud-mkosi/blob/main/PARITY_REPORT.md">here</a>.</p>
+<p>I've also booted the <em>genericcloud</em> profile image under UEFI in a local VM to verify
+live bootability, <cite>bootctl status</cite>, network connectivity, and APT repository setup.
+This completes Phase 1 of the implementation. The remaining phases outlined in the
+specification include:</p>
+<ol class="arabic simple">
+<li><strong>Phase 2: Immutable Images with dm-verity</strong>:
+Configure <cite>Verity=hash</cite> in systemd-repart's <cite>10-root.conf</cite>. Enable mkosi auto-signing
+for the verity root hash and pass the root hash into UKI kernel command lines
+automatically.</li>
+<li><strong>Phase 3: Secure Boot &amp; Signed UKIs</strong>:
+Integrate <cite>SecureBoot=yes</cite> with custom owner keys or <cite>ShimBootloader=signed</cite> using
+Microsoft Third-Party CA signed shim binaries.</li>
+<li><strong>Phase 4: System Extensions (systemd-sysext)</strong>:
+Decouple cloud vendor agents (AWS CLI, Azure waagent, GCP guest agent) into separate
+<cite>.raw</cite> system extensions. Maintain a single unified, signed base OS image across all
+cloud platforms.</li>
+<li><strong>Phase 5: Btrfs Automated Rollbacks</strong>:
+Combine Btrfs <cite>&#64;snapshots</cite> with systemd-boot snapshot boot entries for fail-safe OS
+upgrades.</li>
+</ol>
+<p>Another advantage of this setup is that the same tooling can build images for physical
+laptops and bare-metal servers. For example, in an <a class="reference external" href="https://copyninja.in/blog/live_install_debian.html">earlier post</a>, I walked through live-booting
+with <em>debootstrap</em> and manually configuring <em>systemd-boot</em> for a custom UEFI
+installation. With <em>mkosi</em>, I can simply generate a customized image locally with UKIs
+ready to go, live-boot the target machine, and write the image directly to the root disk.</p>
+</div>
+<div class="section" id="conclusion">
+<h2>Conclusion</h2>
+<p>This experiment is an exploration of the power of <em>mkosi</em>; I haven't discussed adoption
+with the <em>Debian Cloud Team</em> yet. For now, this will continue as my pet project. While
+I won't be hosting pre-built binary images, anyone interested is welcome to clone the
+repository and build the images locally.</p>
+<p>I will probably take some more time before tackling dm-verity images, as I want to
+understand the nuances thoroughly before experimenting with them. Until then, happy
+hacking! Please report any issues or suggestions on <a class="reference external" href="https://github.com/copyninja/debian-cloud-mkosi/issues">GitHub</a>.</p>
+</div>
+
+  </div><!-- /.entry-content -->
+  <div id="footer">
+    <p>
+      <italic>Tagged as:
+      cloud, 
+      debian, 
+      mkosi, 
+      vm images, 
+      </italic>
+    </p>
+</section>
+  </div>
+  <hr/>
+  <div id="footer">    
+    Site Proudly powered by <a href="http://getpelican.com/">Pelican</a>
+  </div>
+</body>
+</html>
